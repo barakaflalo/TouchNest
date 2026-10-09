@@ -199,7 +199,7 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
 .ptt{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .dragGhost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-4deg) scale(1.06);box-shadow:0 12px 24px rgba(0,0,0,.5)}
 .flyc{position:fixed;z-index:45;pointer-events:none;transition:left .28s ease,top .28s ease}
-.tn-banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;white-space:nowrap;padding:12px 22px;border-radius:20px;background:rgba(8,8,8,.88);border:2px solid var(--acc);box-shadow:0 0 28px color-mix(in srgb,var(--acc) 45%,transparent);animation:bannerIn 2.6s cubic-bezier(.2,.9,.3,1.2) forwards;max-width:94vw}
+.tn-banner{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);z-index:46;pointer-events:none;text-align:center;white-space:nowrap;padding:12px 22px;border-radius:20px;background:rgba(8,8,8,.88);border:2px solid var(--acc);box-shadow:0 0 28px color-mix(in srgb,var(--acc) 45%,transparent);animation:bannerIn 2.6s cubic-bezier(.2,.9,.3,1.2) forwards;max-width:94vw}
 .tn-banner b{display:block;font-family:var(--disp);font-weight:400;font-size:clamp(30px,10vw,52px);line-height:1;color:var(--acc2)}
 .tn-banner span{display:block;margin-top:6px;color:#f3efe4;font-size:14px;font-weight:500;white-space:normal}
 .tn-banner.touch{border-color:#e74c3c}.tn-banner.touch b{color:#ff6b5b}
@@ -263,6 +263,26 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
 @media (max-width:370px){.abar .btn{font-size:15px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 .tn-fast *{animation:none!important;transition:none!important}
+
+/* ---- 1.1 art ---- */
+.pc.bk{background:url(img/back-blue.webp) center/100% 100% no-repeat,var(--deck0);border:1px solid rgba(0,0,0,.45)}
+.pc.bk.d1{background:url(img/back-red.webp) center/100% 100% no-repeat,var(--deck1)}
+.pc.bk::after{display:none}
+.pc .face.f10,.pc .face.f11,.pc .face.f12{background:center/cover no-repeat;color:transparent;border:1px solid #b8913a;inset:calc(var(--w)*.24) calc(var(--w)*.17) calc(var(--w)*.17)}
+.pc .face.f10{background-image:url(img/face-j.webp)}.pc .face.f11{background-image:url(img/face-q.webp)}.pc .face.f12{background-image:url(img/face-k.webp)}
+[data-board="felt"] #game{background:radial-gradient(ellipse at 50% 45%,transparent 45%,rgba(0,0,0,.4)),url(img/felt.webp) center/cover,#0f3d2a}
+.hero .heroArt{display:block;width:min(82%,300px);margin:4px auto -16px;position:relative;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));pointer-events:none}
+.hero p{max-width:none}
+.hlogo{height:46px;width:auto;flex:1 1 auto;min-width:0;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.lvb{flex-direction:column;gap:4px;padding:8px 4px}
+.lvb .av,.prow .who .av{border-radius:50%;object-fit:cover;border:2px solid var(--acc)}
+.lvb .av{width:52px;height:52px}
+.prow .who .av{width:24px;height:24px;align-self:center;border-width:1.5px}
+.prow .who{align-items:center}
+.tn-banner .stamp{display:block;width:clamp(90px,30vw,140px);height:auto;margin:-58px auto 4px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.6))}
+.res .winArt{display:block;width:auto;height:clamp(84px,17vh,170px);max-width:60%;margin:-6px auto 2px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));animation:winPop .7s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes winPop{from{transform:scale(.4) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.res .winArt{animation:none}}
 </style>
 </head>
 <body>
@@ -271,12 +291,13 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
   <div class="home">
     <div class="htop">
       <div class="tools"><button class="ibtn" id="hTheme" aria-label="theme">🎨</button><button class="ibtn" id="hMode" aria-label="day/night">🌙</button></div>
+      <img class="hlogo" src="img/logo.webp" alt="TouchNest">
       <div class="tools"><button class="ibtn" id="hLang" aria-label="language">🌐</button><button class="ibtn" id="hAbout" aria-label="about">ℹ️</button></div>
     </div>
     <div class="hero">
-      <div class="fan" id="heroFan"></div>
-      <h1>TouchNest<small data-t="appName"></small></h1>
+            <h1>TouchNest<small data-t="appName"></small></h1>
       <p data-t="tagline"></p>
+      <img class="heroArt" src="img/hero.webp" alt="" decoding="async">
     </div>
     <div class="modes">
       <button class="mode main hide" id="mCont"><span class="ic">▶</span><span><b data-t="continue"></b><span id="mContSub"></span></span></button>
@@ -994,7 +1015,7 @@ const TB = (() => {
 /* =====================================================================
    TouchNest — app core (storage · settings · screens · cards · sound · backup)
    ===================================================================== */
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const P = 'touch_';
@@ -1078,7 +1099,7 @@ function cardHTML(c, cls, attrs) {
   cls = cls || ''; attrs = attrs || '';
   if (c == null || c < 0) return '<div class="pc bk d0 ' + cls + '" ' + attrs + '></div>';
   const s = TN.suit(c), r = TN.rank(c), d = c >= 52 ? 1 : 0;
-  const mid = r >= 10 ? '<div class="face">' + RL[r] + '<i>' + SUITS[s] + '</i></div>' : '<div class="pip">' + SUITS[s] + '</div>';
+  const mid = r >= 10 ? '<div class="face f' + r + '">' + RL[r] + '<i>' + SUITS[s] + '</i></div>' : '<div class="pip">' + SUITS[s] + '</div>';
   return '<div class="pc ' + (s === 1 || s === 2 ? 'red ' : '') + 'd' + d + ' ' + cls + '" data-c="' + c + '" ' + attrs + ' aria-label="' + esc(cardName(c)) + '">' +
     '<div class="ix">' + RL[r] + '<s>' + SUITS[s] + '</s></div>' + mid + '<div class="ix b">' + RL[r] + '<s>' + SUITS[s] + '</s></div><i class="dk"></i></div>';
 }
@@ -1160,7 +1181,7 @@ xThinking:"{0} חושב…", xPlaying:"{0} משחק…", waitForX:"מחכים ל
 hDraw:"פתח קלף מהמקור", hPass:"העבר את התור", hDiscard:"הנח את הקלף בזריקה", hMove:"{0} אל {1}",
 dFound:"האסים", dTab:"השולחן", dOR:"הקופה של {0}", dOW:"הזריקה של {0}",
 youWon:"ניצחת! 🏆", xWon:"{0} ניצח", drawGame:"תיקו", endStuck:"אף אחד לא הצליח להתקדם — המשחק נגמר בתיקו.", endCap:"המשחק ארך יותר מדי — תיקו.",
-ptBase:"ניצחון", ptSW:"מקור וזריקה של {0} (\u2066×2\u2069)", ptR:"קופה קטנה של {0} (\u2066×4\u2069)", matchTo:"הסדרה: עד {0} נקודות", matchOverX:"{0} ניצח בסדרה! 🏆",
+ptBase:"ניצחון", ptSW:"מקור וזריקה של {0}", ptR:"קופה קטנה של {0}", matchTo:"הסדרה: עד {0} נקודות", matchOverX:"{0} ניצח בסדרה! 🏆",
 anLoaded:"העמסות על היריב: {0} — {1}, {2} — {3}", anTouch:"טאץ' שתפסת: {0} · טעויות של היריב: {1} · טעויות שלך: {2}", hintsUsed:"רמזים: {0}",
 nextGame:"משחק הבא", rematch:"סדרה חדשה", seeBoard:"הצג את השולחן", home:"לבית", seeResults:"תוצאות", waitHostNext:"מחכים שהמארח יתחיל את המשחק הבא",
 menu:"תפריט", soundOff:"כבה צליל", soundOn:"הפעל צליל", bigTable:"שולחן ענק (לרוחב)", bigTableNo:"מסך מלא לא זמין כאן — סובב את הטלפון לרוחב", roomInfo:"החדר", subOn:"המחשב ישחק במקום {0}", subOff:"החזר את המקום לחבר", close:"סגור", cancel:"ביטול", ok:"אישור",
@@ -1221,7 +1242,7 @@ xThinking:"{0} is thinking…", xPlaying:"{0} is playing…", waitForX:"Waiting 
 hDraw:"Turn a card from your stock", hPass:"Pass the turn", hDiscard:"Put the card on your waste", hMove:"{0} to {1}",
 dFound:"the aces", dTab:"the table", dOR:"{0}'s reserve", dOW:"{0}'s waste",
 youWon:"You won! 🏆", xWon:"{0} won", drawGame:"Draw", endStuck:"Nobody could make progress — the game is a draw.", endCap:"The game went on too long — draw.",
-ptBase:"Win", ptSW:"{0}'s stock and waste (\u2066×2\u2069)", ptR:"{0}'s reserve (\u2066×4\u2069)", matchTo:"Match: first to {0} points", matchOverX:"{0} wins the match! 🏆",
+ptBase:"Win", ptSW:"{0}'s stock and waste", ptR:"{0}'s reserve", matchTo:"Match: first to {0} points", matchOverX:"{0} wins the match! 🏆",
 anLoaded:"Cards loaded on the opponent: {0} — {1}, {2} — {3}", anTouch:"Touches you caught: {0} · opponent's slips: {1} · your slips: {2}", hintsUsed:"Hints: {0}",
 nextGame:"Next game", rematch:"New match", seeBoard:"Show the table", home:"Home", seeResults:"Results", waitHostNext:"Waiting for the host to start the next game",
 menu:"Menu", soundOff:"Sound off", soundOn:"Sound on", bigTable:"Big table (landscape)", bigTableNo:"Full screen isn't available here — turn the phone sideways", roomInfo:"Room", subOn:"Computer plays for {0}", subOff:"Give the seat back to the friend", close:"Close", cancel:"Cancel", ok:"OK",
@@ -1282,7 +1303,7 @@ xThinking:"{0} думает…", xPlaying:"{0} играет…", waitForX:"Жд�
 hDraw:"Откройте карту из колоды", hPass:"Пасуйте", hDiscard:"Положите карту в сброс", hMove:"{0} → {1}",
 dFound:"тузы", dTab:"стол", dOR:"резерв: {0}", dOW:"сброс: {0}",
 youWon:"Вы выиграли! 🏆", xWon:"{0} выиграл", drawGame:"Ничья", endStuck:"Никто не смог продвинуться — ничья.", endCap:"Игра затянулась — ничья.",
-ptBase:"Победа", ptSW:"Колода и сброс: {0} (\u2066×2\u2069)", ptR:"Резерв: {0} (\u2066×4\u2069)", matchTo:"Матч: до {0} очков", matchOverX:"{0} выиграл матч! 🏆",
+ptBase:"Победа", ptSW:"Колода и сброс: {0}", ptR:"Резерв: {0}", matchTo:"Матч: до {0} очков", matchOverX:"{0} выиграл матч! 🏆",
 anLoaded:"Подкинуто сопернику: {0} — {1}, {2} — {3}", anTouch:"Пойманные «Тач»: {0} · ошибки соперника: {1} · ваши ошибки: {2}", hintsUsed:"Подсказок: {0}",
 nextGame:"Следующая партия", rematch:"Новый матч", seeBoard:"Показать стол", home:"Домой", seeResults:"Итоги", waitHostNext:"Ждём, пока хозяин начнёт следующую партию",
 menu:"Меню", soundOff:"Выключить звук", soundOn:"Включить звук", bigTable:"Большой стол (горизонтально)", bigTableNo:"Полный экран недоступен — поверните телефон", roomInfo:"Комната", subOn:"Компьютер играет за {0}", subOff:"Вернуть место другу", close:"Закрыть", cancel:"Отмена", ok:"ОК",
@@ -1343,7 +1364,7 @@ xThinking:"{0} está pensando…", xPlaying:"{0} está jugando…", waitForX:"Es
 hDraw:"Destapa una carta del mazo", hPass:"Pasa el turno", hDiscard:"Pon la carta en el descarte", hMove:"{0} a {1}",
 dFound:"los ases", dTab:"la mesa", dOR:"la reserva de {0}", dOW:"el descarte de {0}",
 youWon:"¡Ganaste! 🏆", xWon:"{0} ganó", drawGame:"Empate", endStuck:"Nadie pudo avanzar — la partida es empate.", endCap:"La partida se alargó demasiado — empate.",
-ptBase:"Victoria", ptSW:"Mazo y descarte de {0} (\u2066×2\u2069)", ptR:"Reserva de {0} (\u2066×4\u2069)", matchTo:"Serie: a {0} puntos", matchOverX:"¡{0} gana la serie! 🏆",
+ptBase:"Victoria", ptSW:"Mazo y descarte de {0}", ptR:"Reserva de {0}", matchTo:"Serie: a {0} puntos", matchOverX:"¡{0} gana la serie! 🏆",
 anLoaded:"Cartas cargadas al rival: {0} — {1}, {2} — {3}", anTouch:"Touch acertados: {0} · fallos del rival: {1} · tus fallos: {2}", hintsUsed:"Pistas: {0}",
 nextGame:"Siguiente partida", rematch:"Nueva serie", seeBoard:"Ver la mesa", home:"Inicio", seeResults:"Resultados", waitHostNext:"Esperando a que el anfitrión empiece la siguiente partida",
 menu:"Menú", soundOff:"Silenciar", soundOn:"Activar sonido", bigTable:"Mesa grande (horizontal)", bigTableNo:"La pantalla completa no está disponible — gira el teléfono", roomInfo:"Sala", subOn:"La computadora juega por {0}", subOff:"Devolver el sitio al amigo", close:"Cerrar", cancel:"Cancelar", ok:"Aceptar",
@@ -1404,7 +1425,7 @@ xThinking:"{0} يفكّر…", xPlaying:"{0} يلعب…", waitForX:"بانتظ�
 hDraw:"اكشف ورقة من الرزمة", hPass:"مرّر الدور", hDiscard:"ضع الورقة في الرمي", hMove:"{0} إلى {1}",
 dFound:"الآصات", dTab:"الطاولة", dOR:"احتياط {0}", dOW:"رمي {0}",
 youWon:"فزت! 🏆", xWon:"{0} فاز", drawGame:"تعادل", endStuck:"لم يستطع أحد التقدّم — تعادل.", endCap:"طالت اللعبة كثيرًا — تعادل.",
-ptBase:"فوز", ptSW:"رزمة ورمي {0} (\u2066×2\u2069)", ptR:"احتياط {0} (\u2066×4\u2069)", matchTo:"السلسلة: حتى {0} نقطة", matchOverX:"{0} فاز بالسلسلة! 🏆",
+ptBase:"فوز", ptSW:"رزمة ورمي {0}", ptR:"احتياط {0}", matchTo:"السلسلة: حتى {0} نقطة", matchOverX:"{0} فاز بالسلسلة! 🏆",
 anLoaded:"أوراق حُمّلت على الخصم: {0} — {1}، {2} — {3}", anTouch:"تاتش أمسكته: {0} · أخطاء الخصم: {1} · أخطاؤك: {2}", hintsUsed:"تلميحات: {0}",
 nextGame:"اللعبة التالية", rematch:"سلسلة جديدة", seeBoard:"اعرض الطاولة", home:"الرئيسية", seeResults:"النتائج", waitHostNext:"بانتظار المضيف ليبدأ اللعبة التالية",
 menu:"القائمة", soundOff:"إيقاف الصوت", soundOn:"تشغيل الصوت", bigTable:"طاولة كبيرة (بالعرض)", bigTableNo:"ملء الشاشة غير متاح هنا — أدر الهاتف", roomInfo:"الغرفة", subOn:"الكمبيوتر يلعب مكان {0}", subOff:"أعد المكان للصديق", close:"إغلاق", cancel:"إلغاء", ok:"موافق",
@@ -1484,7 +1505,7 @@ const nameOf = s => {
   if (isHostOnline() && s === 1 && isBot(1)) return (G.names[1] || T('friend')) + ' 🤖';
   return G.names[s] || (s === 0 ? T('player') + ' 1' : T('player') + ' 2');
 };
-const LVL = ['lvEasy', 'lvMed', 'lvHard'];
+const LVL = ['lvEasy', 'lvMed', 'lvHard'], AV = ['img/av-04.webp', 'img/av-03.webp', 'img/av-11.webp'];
 
 /* ---------- starting games ---------- */
 function newSession(mode, o) {
@@ -1600,7 +1621,7 @@ function touchShow(e) {
 function banner(big, small, cls) {
   const host = $('#game'); if (!host || SCREEN !== 'game') return;           // outside #tarea: a re-render must not wipe it
   host.querySelectorAll('.tn-banner').forEach(b => b.remove());
-  const b = document.createElement('div'); b.className = 'tn-banner ' + (cls || ''); b.innerHTML = '<b>' + esc(big) + '</b>' + (small ? '<span>' + esc(small) + '</span>' : '');
+  const b = document.createElement('div'); b.className = 'tn-banner ' + (cls || ''); b.innerHTML = (cls === 'touch' ? '<img class="stamp" src="img/touch-stamp.webp" alt="">' : '') + '<b>' + esc(big) + '</b>' + (small ? '<span>' + esc(small) + '</span>' : '');
   host.appendChild(b); setTimeout(() => b.remove(), 2700);
 }
 
@@ -1685,7 +1706,7 @@ function showResult() {
   const R = resultData(); if (!R || R.winner == null) return;
   const me = devSeats().length === 1 ? devSeats()[0] : -1;
   const ttl = R.winner < 0 ? T('drawGame') : (me >= 0 ? (R.winner === me ? T('youWon') : T('xWon', nameOf(R.winner))) : T('xWon', nameOf(R.winner)));
-  let h = '<div class="res"><h3>' + esc(ttl) + '</h3>';
+  let h = '<div class="res">' + (R.winner >= 0 && (me < 0 || R.winner === me) ? '<img class="winArt" src="img/win.webp" alt="">' : '') + '<h3>' + esc(ttl) + '</h3>';
   if (R.winner < 0) h += '<p class="muted">' + esc(T(R.end === 'cap' ? 'endCap' : 'endStuck')) + '</p>';
   else {
     const p = R.pts, L = nameOf(1 - R.winner);
@@ -1766,7 +1787,7 @@ function tableHTML(v, o) {
     const sA = who === 'me' && v.drawn < 0 ? 'data-act="draw"' : '';
     piles.push('<div class="pile"><span class="n">' + p.st + '</span>' + (p.st ? backHTML(s, '', 'data-pid="S' + s + '" ' + sA) : '<div class="slot" data-pid="S' + s + '" ' + sA + '>' + (p.w ? '↻' : '') + '</div>') + '<span class="lab">' + esc(T('pStock')) + '</span></div>');
     const online = isOnline() && !isGuest() ? (s === 0 || guestOnline()) : true;
-    const whoH = '<div class="who"><b>' + (isOnline() ? '<i class="dot' + (online ? '' : ' off') + '"></i>' : '') + esc(o.names[s]) + '</b><span>' + esc(T('leftN', iso(String(p.r + p.st + p.w + (dr ? 1 : 0))))) + '</span>' + (o.score ? '<span>' + esc(T('ptsN', num(o.score[s]))) + '</span>' : '') + '</div>';
+    const whoH = '<div class="who">' + (G.mode === 'cpu' && s === 1 ? '<img class="av" src="' + AV[G.lvl] + '" alt="">' : '') + '<b>' + (isOnline() ? '<i class="dot' + (online ? '' : ' off') + '"></i>' : '') + esc(o.names[s]) + '</b><span>' + esc(T('leftN', iso(String(p.r + p.st + p.w + (dr ? 1 : 0))))) + '</span>' + (o.score ? '<span>' + esc(T('ptsN', num(o.score[s]))) + '</span>' : '') + '</div>';
     if (cls === 'me') piles.reverse();                    // mine: stock · open · waste · reserve (reserve under the right thumb)
     return '<div class="prow ' + cls + (turn ? ' turn' : '') + '">' + whoH + '<div class="piles">' + piles.join('') + '</div></div>';
   };
@@ -2224,7 +2245,6 @@ let RULES_BACK = 'home';
 function renderHome() {
   applyLang();
   $('#verLbl').textContent = 'v' + APP_VERSION;
-  $('#heroFan').innerHTML = [0, 64, 12, 103].map((c, i) => cardHTML(c, '', 'style="transform:translateX(-50%) rotate(' + (-24 + i * 16) + 'deg)"')).join('');
   const c = $('#mCont');
   if (G && ((G.M && !(G.M.over && G.matchOver)) || isOnline())) {
     c.classList.remove('hide');
@@ -2238,7 +2258,7 @@ function setupBox(mode) {
   const o = overlay('<div id="suB"></div>');
   function draw() {
     let h = '<h3>' + esc(mode === 'cpu' ? T('vsCpu') : T('twoPhone')) + '</h3>';
-    if (mode === 'cpu') h += '<label class="f">' + esc(T('chooseLevel')) + '</label><div class="lvls">' + [0, 1, 2].map(i => '<button class="btn ' + (level === i ? 'main' : '') + '" data-l="' + i + '">' + esc(T(LVL[i])) + '</button>').join('') + '</div><p class="sub">' + esc(T('lvSub' + level)) + '</p>';
+    if (mode === 'cpu') h += '<label class="f">' + esc(T('chooseLevel')) + '</label><div class="lvls">' + [0, 1, 2].map(i => '<button class="btn lvb ' + (level === i ? 'main' : '') + '" data-l="' + i + '"><img class="av" src="' + AV[i] + '" alt="">' + esc(T(LVL[i])) + '</button>').join('') + '</div><p class="sub">' + esc(T('lvSub' + level)) + '</p>';
     else h += [0, 1].map(i => '<label class="f" for="nm' + i + '">' + esc(T('playerN', i + 1)) + '</label><input class="in" id="nm' + i + '" data-nm="' + i + '" maxlength="20" value="' + esc(names[i] || '') + '">').join('');
     h += '<label class="f">' + esc(T('touchMode')) + '</label><div class="seg" data-sk="touch"><button data-v="beginner" class="' + (touch === 'beginner' ? 'on' : '') + '">🛟 ' + esc(T('tBeginner')) + '</button><button data-v="classic" class="' + (touch === 'classic' ? 'on' : '') + '">✋ ' + esc(T('tClassic')) + '</button></div><p class="sub">' + esc(touch === 'classic' ? T('tClassicSub') : T('tBeginnerSub')) + '</p>';
     h += '<label class="f">' + esc(T('matchLbl')) + '</label><div class="seg" data-sk="target">' + [[0, T('oneGame')], [100, T('to', '100')], [200, T('to', '200')]].map(([v, l]) => '<button data-v="' + v + '" class="' + (target === v ? 'on' : '') + '">' + esc(l) + '</button>').join('') + '</div><p class="sub">' + esc(T('matchSub')) + '</p>';
