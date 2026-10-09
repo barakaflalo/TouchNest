@@ -187,6 +187,9 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
 .abar .btn{flex:1;min-height:52px;padding:4px 6px;font-size:16px;line-height:1.15;color:var(--feltInk);border-color:var(--feltLine);flex-direction:column;gap:0}
 .abar .btn small{font-size:11px;opacity:.85;font-weight:400}
 .abar .btn.sm{flex:0 0 54px}
+.abar .btn.up{flex:0 0 auto;padding:4px 12px;border-color:var(--acc2);color:var(--acc2);font-weight:700}
+.bub.say{border:2px solid var(--acc);font-size:14px;padding:5px 10px;max-width:78vw;pointer-events:none;z-index:6}
+.bub.say small{display:none}
 .abar .btn.main{background:var(--acc);color:var(--accInk);border-color:var(--acc)}
 .abar .btn.touch{background:#c0392b;border-color:#e74c3c;color:#fff;font-family:var(--disp);font-size:20px;flex:1.4}
 .abar .btn.touch.lock{opacity:.4}
@@ -209,6 +212,10 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
 
 /* landscape phone: opponent column · board · my column */
 @media (orientation:landscape) and (max-height:560px){
+  .tarea:has(> .sp){display:flex}
+  .sp .prow .piles{flex-wrap:nowrap;max-width:none;row-gap:0}
+  .isSp .msg{position:static}
+  .sp{justify-content:space-between}
   .tarea{display:grid;grid-template-columns:1fr auto 1fr;grid-template-rows:1fr;align-items:center;gap:10px}
   .prow .piles{flex-wrap:wrap;max-width:calc(var(--cw)*2.6);row-gap:14px}
   .prow.me .who{order:0}
@@ -283,6 +290,32 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
 .res .winArt{display:block;width:auto;height:clamp(84px,17vh,170px);max-width:60%;margin:-6px auto 2px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));animation:winPop .7s cubic-bezier(.2,.9,.3,1.3) both}
 @keyframes winPop{from{transform:scale(.4) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.res .winArt{animation:none}}
+
+/* ---- 1.2 Speed ---- */
+.gsw{margin:0 0 4px}.gsw button{font-size:16px;font-weight:600;min-height:48px}
+.gdesc{margin:2px 0 12px;text-align:center;font-size:13px;opacity:.8}
+.sp{display:flex;flex-direction:column;justify-content:space-around;flex:1;gap:6px;position:relative;min-height:100%}
+.sp .prow .piles{gap:calc(var(--cw)*.14);align-items:flex-end}
+.sp-hand{display:flex;gap:calc(var(--cw)*.07);direction:ltr}
+.sp-mid{display:flex;justify-content:center;align-items:flex-end;gap:calc(var(--cw)*.22);direction:ltr}
+.sp-pile{padding:5px;border-radius:calc(var(--cw)*.16);background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.sp-pile .n{top:-4px;inset-inline-end:-4px}
+.sp .pc.can{box-shadow:0 0 0 2px color-mix(in srgb,var(--acc2) 75%,transparent),0 3px 8px rgba(0,0,0,.4)}
+.sp .pc.pend{opacity:.4;transform:translateY(calc(var(--cw)*-.15))}
+.sp .pc[data-sh]{cursor:pointer;touch-action:none}
+.sp .dk{display:none}
+.sp-rot{transform:rotate(180deg)}
+.sp-empty{visibility:hidden}
+.sp-ready{color:#46d07a;font-weight:700}
+.sp .sp-flip{min-height:44px;margin-top:4px;padding:6px 18px;color:var(--feltInk);border-color:var(--feltLine)}
+.sp-flip.main{background:var(--acc);color:var(--accInk)!important;border-color:var(--acc)!important}
+.sp-flip.on{opacity:.75;border-style:dashed}
+.sp-flip.pulse{animation:hintP 1s ease-in-out infinite}
+.sp-cd{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--disp);font-size:min(32vw,150px);color:var(--acc2);text-shadow:0 4px 18px rgba(0,0,0,.65);pointer-events:none;z-index:4}
+.pc.pop{animation:spPop .28s ease}
+.pc.shake{animation:shake .3s}
+@keyframes spPop{0%{transform:scale(.6) rotate(-6deg)}70%{transform:scale(1.08)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.pc.pop,.sp-flip.pulse{animation:none}}
 </style>
 </head>
 <body>
@@ -296,9 +329,11 @@ input.in,select.in{width:100%;min-height:48px;border-radius:12px;border:1.5px so
     </div>
     <div class="hero">
             <h1>TouchNest<small data-t="appName"></small></h1>
-      <p data-t="tagline"></p>
+      <p id="heroTag"></p>
       <img class="heroArt" src="img/hero.webp" alt="" decoding="async">
     </div>
+    <div class="seg gsw" id="gameSw"><button data-g="touch">🃏 <span data-t="gTouch"></span></button><button data-g="speed">⚡ <span data-t="gSpeed"></span></button></div>
+    <p class="gdesc" id="gDesc"></p>
     <div class="modes">
       <button class="mode main hide" id="mCont"><span class="ic">▶</span><span><b data-t="continue"></b><span id="mContSub"></span></span></button>
       <button class="mode" id="mCpu"><span class="ic">🤖</span><span><b data-t="vsCpu"></b><span data-t="vsCpuSub"></span></span></button>
@@ -1011,11 +1046,122 @@ const TB = (() => {
 })();
 
 
+/* ---- speed.js ---- */
+/* =====================================================================
+   Speed (ספיד) — rules engine + computer player (pure, no DOM). TouchNest 1.2.
+   One deck, card id 0..51 (suit = id / 13 → ♠ ♥ ♦ ♣, rank = id % 13 → 0 = A … 12 = K).
+   Deal: each player 5 in hand + 15 in a face-down draw pile; two side stacks of 6;
+   the first card of each side stack is turned onto the two centre piles when the round starts.
+   Both players play AT THE SAME TIME: any hand card one up or one down from a centre top,
+   any suit, K and A connect. The hand refills to 5 from the draw pile by itself.
+   When nobody can play, both press "flip" (ready) and a new card from each side stack is turned.
+   Side stacks empty → the centre piles (all but their tops) are shuffled into new side stacks.
+   First to empty hand + draw pile wins the round.
+   Actions:  {a:'go'} (the countdown ended) · {a:'play', c, p} · {a:'ready'}
+   ===================================================================== */
+const SP = (() => {
+  const rank = c => c % 13, suit = c => (c / 13) | 0;
+  const top = a => a.length ? a[a.length - 1] : -1;
+  const HAND = 5, DRAW = 15, SIDE = 6;
+  function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function shuffle(arr, r) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+  const fits = (c, t) => { if (c < 0 || t < 0) return false; const d = Math.abs(rank(c) - rank(t)); return d === 1 || d === 12; };
+
+  function newGame(o) {
+    o = o || {};
+    const seed = (o.seed == null ? Math.floor(Math.random() * 2 ** 31) : o.seed) >>> 0, r = rng(seed);
+    const d = shuffle(Array.from({ length: 52 }, (_, i) => i), r);
+    const S = { v: 's1', seed, P: [], side: [], C: [[], []], ready: [false, false], go: false, over: false, winner: -1, end: '', n: 0, last: null,
+      flips: 0, shuffles: 0, st: { plays: [0, 0], best: [0, 0] }, rs: Math.floor(r() * 1e9) };
+    for (let p = 0; p < 2; p++) S.P.push({ h: d.splice(0, HAND), d: d.splice(0, DRAW) });
+    S.side = [d.splice(0, SIDE), d.splice(0, SIDE)];
+    return S;
+  }
+  const left = (S, p) => S.P[p].h.length + S.P[p].d.length;
+  function canPlay(S, p) { const P = S.P[p]; for (const c of P.h) for (let k = 0; k < 2; k++) if (fits(c, top(S.C[k]))) return true; return false; }
+  function pilesFor(S, c) { const o = []; for (let k = 0; k < 2; k++) if (fits(c, top(S.C[k]))) o.push(k); return o; }
+  const stuck = S => !canPlay(S, 0) && !canPlay(S, 1);
+
+  function flip(S) {
+    if (!S.side[0].length && !S.side[1].length) {         // reshuffle the centre (all but the tops) into new side stacks
+      const pool = S.C[0].slice(0, -1).concat(S.C[1].slice(0, -1));
+      if (!pool.length) return false;
+      S.C = [[top(S.C[0])], [top(S.C[1])]];
+      shuffle(pool, rng(S.rs + S.shuffles * 7919)); S.shuffles++;
+      const h = Math.ceil(pool.length / 2); S.side = [pool.slice(0, h), pool.slice(h)];
+    }
+    for (let k = 0; k < 2; k++) { const src = S.side[k].length ? S.side[k] : S.side[1 - k]; if (src.length) S.C[k].push(src.pop()); }
+    S.flips++; return true;
+  }
+  function finish(S, w, why) { S.over = true; S.winner = w; S.end = why; }
+
+  /* apply one action by player p → {ok, why?} */
+  function apply(S, p, act) {
+    if (!act || S.over) return { ok: false, why: 'over' };
+    if (act.a === 'go') { if (S.go) return { ok: false, why: 'dup' }; S.go = true; flip(S); S.n++; S.last = { a: 'flip', n: S.n }; return { ok: true }; }
+    if (!S.go) return { ok: false, why: 'wait' };
+    if (act.a === 'play') {
+      const P = S.P[p], i = P.h.indexOf(act.c), k = act.p;
+      if (i < 0 || (k !== 0 && k !== 1)) return { ok: false, why: 'gone' };
+      if (!fits(act.c, top(S.C[k]))) return { ok: false, why: 'nofit' };
+      P.h.splice(i, 1); S.C[k].push(act.c);
+      if (P.d.length) P.h.push(P.d.pop());
+      S.ready[p] = false; S.st.plays[p]++; S.n++;
+      S.last = { a: 'play', p, c: act.c, k, n: S.n };
+      if (!left(S, p)) finish(S, p, 'out');
+      return { ok: true };
+    }
+    if (act.a === 'ready') {
+      S.ready[p] = true; S.n++; S.last = { a: 'ready', p, n: S.n };
+      if (S.ready[0] && S.ready[1]) {
+        S.ready = [false, false];
+        if (!flip(S)) {                                  // nothing left to turn and nobody can play: fewer cards wins
+          const a = left(S, 0), b = left(S, 1); finish(S, a === b ? -1 : a < b ? 0 : 1, 'stuck');
+        } else S.last = { a: 'flip', n: S.n };
+      }
+      return { ok: true };
+    }
+    return { ok: false, why: 'bad' };
+  }
+
+  /* what a device may see: its own hand(s); the other hand only as a count */
+  function view(S, seats) {
+    const pl = q => ({ h: seats.includes(q) || S.over ? S.P[q].h.slice() : null, hn: S.P[q].h.length, d: S.P[q].d.length });
+    return { v: 's1', P: [pl(0), pl(1)], side: [S.side[0].length, S.side[1].length], C: [top(S.C[0]), top(S.C[1])], Cn: [S.C[0].length, S.C[1].length],
+      ready: S.ready.slice(), go: S.go, over: S.over, winner: S.winner, end: S.end, n: S.n, last: S.last, st: S.st };
+  }
+
+  /* ---------- computer ---------- */
+  // how many more of my hand cards could follow if I put c on pile k (chains = speed)
+  function chain(hand, c, other) {
+    let t = c, n = 0; const rest = hand.filter(x => x !== c);
+    for (;;) { const i = rest.findIndex(x => fits(x, t) || fits(x, other)); if (i < 0) break; t = fits(rest[i], t) ? rest[i] : t; rest.splice(i, 1); n++; }
+    return n;
+  }
+  function choose(S, p, lvl, r) {
+    r = r || Math.random;
+    const hand = S.P[p].h, opts = [];
+    for (const c of hand) for (const k of pilesFor(S, c)) opts.push({ c, k });
+    if (!opts.length) return null;
+    if (lvl === 0) { const o = opts[Math.floor(r() * opts.length)]; return { a: 'play', c: o.c, p: o.k }; }
+    let best = null, bv = -1;
+    for (const o of opts) { const v = chain(hand, o.c, top(S.C[1 - o.k])) + r() * .01; if (v > bv) { bv = v; best = o; } }
+    return { a: 'play', c: best.c, p: best.k };
+  }
+  /* best pile for a human tap (when the card fits both) */
+  function bestPile(S, p, c) { const ks = pilesFor(S, c); if (ks.length < 2) return ks[0]; return chain(S.P[p].h, c, top(S.C[1])) >= chain(S.P[p].h, c, top(S.C[0])) ? 0 : 1; }
+  /* reaction time of the computer, ms (per level) */
+  const DELAY = { 0: [1500, 2400], 1: [950, 1500], 2: [560, 900] };
+
+  return { newGame, apply, view, canPlay, pilesFor, stuck, fits, left, choose, bestPile, DELAY, rank, suit, top, HAND };
+})();
+
+
 /* ---- app_core.js ---- */
 /* =====================================================================
    TouchNest — app core (storage · settings · screens · cards · sound · backup)
    ===================================================================== */
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const P = 'touch_';
@@ -1038,7 +1184,7 @@ try { navigator.storage && navigator.storage.persist && navigator.storage.persis
 /* ---------- settings ---------- */
 const DEF = {
   name: '', lang: 'he', theme: 'gold', mode: 'night', board: 'felt', sound: true, vib: true, speed: 'normal',
-  level: 1, touch: 'beginner', target: 100, oneTap: true, flip: true, tutDone: false
+  level: 1, touch: 'beginner', target: 100, oneTap: true, flip: true, tutDone: false, talk: true, game: 'touch', sbest: 1
 };
 const ST = Object.assign({}, DEF, LS.get('set', {}));
 const saveST = () => LS.set('set', ST);
@@ -1217,7 +1363,61 @@ phNice:"מהלך יפה!", phHurry:"נו… תורך 😅", phLucky:"איזה מ
 rulesA:"<h3>המטרה</h3><p>לכל שחקן חפיסה שלמה משלו. מנצח מי שנפטר ראשון מכל הקלפים שלו: <b>הקופה הקטנה</b>, <b>המקור</b> ו<b>הזריקה</b>.</p><h3>הסידור</h3><p>כל שחקן מניח <b>13 קלפים בקופה הקטנה</b> — העליון גלוי. ארבעה קלפים גלויים בצד שלו של השולחן — בסך הכל <b>8 ערימות שולחן</b> משותפות. שאר הקלפים הם <b>המקור</b>, סגור. באמצע יש מקום ל<b>8 ערימות אסים</b>.</p><h3>ערימות האסים</h3><p>משותפות לשני השחקנים. בונים <b>מאס עד מלך, לפי צורה</b>. אס גלוי <b>חייב</b> לעלות.</p>",
 rulesB:"<h3>ערימות השולחן</h3><p>בונים <b>בסדר יורד ובצבעים מתחלפים</b> — מלכה אדומה על מלך שחור, ועליה נסיך שחור. מזיזים רק את הקלף העליון. <b>מקום ריק מקבל כל קלף.</b></p>",
 rulesC:"<h3>להעמיס על היריב</h3><p>מותר להניח קלף על <b>הקופה הקטנה</b> ועל <b>הזריקה</b> של היריב — <b>אותה צורה, אחד למעלה או למטה</b>. על 9♠ אפשר 8♠ או 10♠. הקלף הופך לקלף של היריב. אפשר להעמיס מהקופה הקטנה, מהקלף הפתוח ומהשולחן.</p>",
-rulesD:"<h3>התור</h3><ol><li>קודם — כל קלף שיכול לעלות לאסים <b>חייב</b> לעלות.</li><li>אחר כך — אם הקלף העליון בקופה הקטנה יכול לזוז (לשולחן, לאסים או על היריב), <b>חייבים</b> להזיז אותו לפני שפותחים מהמקור.</li><li>מסדרים את השולחן כרצונך, ופותחים <b>קלף אחד</b> מהמקור. אפשר לשחק אותו — ולפתוח עוד.</li><li>קלף פתוח שלא שיחקת — מניחים ב<b>זריקה</b>, ו<b>התור נגמר</b>.</li></ol><p>נגמר המקור? הזריקה מתהפכת והופכת למקור חדש. נגמרו גם המקור וגם הזריקה? משחקים מהקופה הקטנה ומהשולחן, ו\"מעבירים תור\".</p><h3>טאץ'!</h3><p><b>חוקי מתחילים:</b> האפליקציה לא נותנת לשבור את הסדר, ומסבירה מה קודם.</p><p><b>חוקים קלאסיים:</b> אפשר לטעות. אם היריב לא העלה קלף שיכול לעלות לאסים, פתח מהמקור כשהקופה הקטנה יכלה לזוז, או <b>נגע בקלף ושיחק קלף אחר</b> (נגעת — שיחקת!) — יש לך <b>5 שניות</b> ללחוץ <b>טאץ'!</b>. המהלך השגוי מתבטל, והתור עובר אליך. טאץ' בלי טעות? לא קורה כלום, אבל הכפתור ננעל לכמה שניות.</p><h3>ניקוד</h3><p>המנצח מקבל <b>30</b>, ועוד <b>2</b> לכל קלף שנשאר ליריב בקופה הקטנה, ועוד <b>1</b> לכל קלף שנשאר לו במקור ובזריקה. בסדרה — מי שמגיע ראשון ל-100 (או 200). אם אף אחד לא מצליח להתקדם הרבה זמן — תיקו.</p><h3>טיפים</h3><ul><li>הקופה הקטנה היא העיקר — כל קלף שם שווה 2 נקודות ליריב.</li><li>מקום ריק לפני שפותחים קלף — מצוין: כל קלף שתפתח ייכנס אליו והתור ימשיך. מקום ריק כשהתור נגמר — מתנה ליריב.</li><li>העמסה על הקופה הקטנה של היריב היא המהלך הכי חזק במשחק.</li></ul>"
+rulesD:"<h3>התור</h3><ol><li>קודם — כל קלף שיכול לעלות לאסים <b>חייב</b> לעלות.</li><li>אחר כך — אם הקלף העליון בקופה הקטנה יכול לזוז (לשולחן, לאסים או על היריב), <b>חייבים</b> להזיז אותו לפני שפותחים מהמקור.</li><li>מסדרים את השולחן כרצונך, ופותחים <b>קלף אחד</b> מהמקור. אפשר לשחק אותו — ולפתוח עוד.</li><li>קלף פתוח שלא שיחקת — מניחים ב<b>זריקה</b>, ו<b>התור נגמר</b>.</li></ol><p>נגמר המקור? הזריקה מתהפכת והופכת למקור חדש. נגמרו גם המקור וגם הזריקה? משחקים מהקופה הקטנה ומהשולחן, ו\"מעבירים תור\".</p><h3>טאץ'!</h3><p><b>חוקי מתחילים:</b> האפליקציה לא נותנת לשבור את הסדר, ומסבירה מה קודם.</p><p><b>חוקים קלאסיים:</b> אפשר לטעות. אם היריב לא העלה קלף שיכול לעלות לאסים, פתח מהמקור כשהקופה הקטנה יכלה לזוז, או <b>נגע בקלף ושיחק קלף אחר</b> (נגעת — שיחקת!) — יש לך <b>5 שניות</b> ללחוץ <b>טאץ'!</b>. המהלך השגוי מתבטל, והתור עובר אליך. טאץ' בלי טעות? לא קורה כלום, אבל הכפתור ננעל לכמה שניות.</p><h3>ניקוד</h3><p>המנצח מקבל <b>30</b>, ועוד <b>2</b> לכל קלף שנשאר ליריב בקופה הקטנה, ועוד <b>1</b> לכל קלף שנשאר לו במקור ובזריקה. בסדרה — מי שמגיע ראשון ל-100 (או 200). אם אף אחד לא מצליח להתקדם הרבה זמן — תיקו.</p><h3>טיפים</h3><ul><li>הקופה הקטנה היא העיקר — כל קלף שם שווה 2 נקודות ליריב.</li><li>מקום ריק לפני שפותחים קלף — מצוין: כל קלף שתפתח ייכנס אליו והתור ימשיך. מקום ריק כשהתור נגמר — מתנה ליריב.</li><li>העמסה על הקופה הקטנה של היריב היא המהלך הכי חזק במשחק.</li></ul>",
+bUp:"לאסים",
+talkLbl:"דמויות מדברות",
+talkSub:"שחקני המחשב מגיבים במשפט קצר ברגעים חשובים",
+gTouch:"טאץ'",
+gSpeed:"ספיד",
+gameLbl:"משחק",
+sTagline:"ספיד: שניכם משחקים בבת אחת, בלי תורות. מניחים קלף אחד למעלה או למטה — ומי שמהיר יותר, מנצח!",
+tDesc:"טאץ' — לפי התור, מעלים לאסים ומעמיסים על היריב",
+sDesc:"ספיד — שניכם בבת אחת, הכי מהיר מנצח",
+slvSub0:"איטי ולא תמיד בוחר את הקלף הכי טוב.",
+slvSub1:"קצב טוב, ומחפש רצפים של קלפים.",
+slvSub2:"מהיר מאוד. תצטרך אצבעות זריזות!",
+sSeries:"כמה סיבובים",
+sOne:"סיבוב אחד",
+sBo3:"הטוב מ-3",
+sBo5:"הטוב מ-5",
+sTwoSub:"מניחים את הטלפון באמצע — כל אחד משחק מהצד שלו, בבת אחת.",
+sDraw:"מקור",
+sSide:"צד",
+sReady:"מוכן",
+sFlip:"פתח",
+sWait:"רגע... עוד לא התחלנו",
+sGetReady:"היכונו...",
+sGo:"מהר! הניחו קלף אחד למעלה או למטה",
+sNoMove:"אין לך מהלך — לחץ פתח",
+sWaitFlip:"מחכים ש{0} ילחץ פתח",
+sLeftN:"נשארו {0}",
+sPlaysN:"הניח {0}",
+sMatchTo:"סדרה: עד {0} ניצחונות",
+sNextRound:"הסיבוב הבא",
+sRoundsWon:"סיבובים שניצחת",
+sPlaysAvg:"קלפים בממוצע לסיבוב",
+rulesSpeed:"<h3>המטרה</h3><p>להיפטר ראשון מכל הקלפים: <b>5 ביד</b> ו<b>15 במקור</b>. אין תורות — <b>שניכם משחקים בבת אחת</b>.</p><h3>הסידור</h3><p>חפיסה אחת. כל שחקן מקבל 5 קלפים ליד ו-15 למקור. בצדדים יש <b>שתי חפיסות צד</b> של 6. כשהסיבוב מתחיל נפתח קלף מכל חפיסת צד — אלה <b>שתי הערימות באמצע</b>.</p><h3>מה מניחים</h3><p>קלף שהוא <b>אחד למעלה או אחד למטה</b> מהקלף העליון באחת הערימות — <b>בלי קשר לצורה או לצבע</b>. על 7 אפשר 6 או 8. <b>מלך ואס מתחברים</b>: על מלך אפשר אס, ועל אס אפשר מלך.</p><p>הקשה על קלף מניחה אותו במקום הכי טוב. רוצה לבחור ערימה? גרור את הקלף אליה. היד מתמלאת לבד מהמקור.</p><h3>נתקעתם?</h3><p>כשאין לך מהלך, לחץ <b>פתח</b>. כששניכם לחצתם — נפתח קלף חדש מכל חפיסת צד. נגמרו חפיסות הצד? הערימות באמצע מתערבבות ונהיות חפיסות צד חדשות.</p><h3>ניצחון</h3><p>מי שנפטר ראשון מכל הקלפים — מנצח בסיבוב. אפשר לשחק סיבוב אחד, הטוב מ-3 או הטוב מ-5.</p><h3>טיפים</h3><ul><li>חפש רצפים: 5, 6, 7 — שלושה קלפים בשנייה.</li><li>תסתכל על שתי הערימות כל הזמן.</li><li>בטלפון אחד — שימו אותו באמצע, ושניכם נוגעים בבת אחת.</li></ul>",
+tk0_start:"יאללה, בוא נראה מה יש לך!|קדימה, אני מרגיש בר מזל היום 😄",
+tk0_load:"הופה! קבל מתנה 🎁|זה בשבילך, אחי",
+tk0_loaded:"אוי לא, למה אליי?!|ווי, כואב 😅",
+tk0_caught:"טאץ'! תפסתי אותך! 😎|ראיתי, ראיתי! טאץ'!",
+tk0_got:"אופס... לא שמתי לב 🙈|נו באמת, פעם אחת שכחתי!",
+tk0_win:"ניצחתי! לא מאמין! 🎉|יש! עוד אחד?",
+tk0_lose:"כל הכבוד, היית טוב ממני 👏|טוב, הפעם ניצחת. בפעם הבאה!",
+tk1_start:"שב, יקירי, נשחק קצת ☕|סבתא כבר שיחקה את זה לפני שנולדת 😉",
+tk1_load:"קח, מותק, שיהיה לך 😊|סבתא מחלקת מתנות היום",
+tk1_loaded:"אוי, ככה עושים לסבתא?|נו נו נו, ראיתי את זה!",
+tk1_caught:"טאץ'! סבתא רואה הכל 👀|אה-אה! טאץ', חמוד.",
+tk1_got:"אוי, המשקפיים שלי... 👓|נו, תפסת את סבתא. כל הכבוד.",
+tk1_win:"סבתא עדיין יודעת לשחק 💪|ניצחתי! עכשיו לאכול משהו.",
+tk1_lose:"כל הכבוד, חמוד! גאה בך ❤️|ניצחת את סבתא. תבוא שוב?",
+tk2_start:"כל קלף מספר סיפור. נתחיל.|בסבלנות. המשחק ארוך.",
+tk2_load:"קלף לא נזרק — הוא נשלח.|את זה תצטרך לסחוב.",
+tk2_loaded:"מהלך יפה. רשמתי.|מעניין. לא ציפיתי.",
+tk2_caught:"טאץ'. הסדר הוא הכל.|חיפזון הוא אויב השחקן. טאץ'.",
+tk2_got:"עיניך חדות. למדתי משהו.|גם המורה טועה לפעמים.",
+tk2_win:"הניצחון שייך לסבלן.|משחק טוב. כמעט.",
+tk2_lose:"התלמיד עלה על המורה. כל הכבוד.|הוכחת שאתה ראוי. קידה 🙇"
 };
 
 /* ---- i18n/en.js ---- */
@@ -1278,7 +1478,61 @@ phNice:"Nice move!", phHurry:"Come on… your turn 😅", phLucky:"So lucky!", p
 rulesA:"<h3>Goal</h3><p>Each player has a full deck of their own. The first to get rid of all their cards — <b>reserve</b>, <b>stock</b> and <b>waste</b> — wins.</p><h3>Layout</h3><p>Each player puts <b>13 cards in the reserve</b>, the top one face up, and four face-up cards on their side of the table — <b>8 shared table piles</b> in all. The rest is the face-down <b>stock</b>. The middle has room for <b>8 ace piles</b>.</p><h3>Ace piles</h3><p>Shared by both players. Build <b>from ace to king, by suit</b>. A visible ace <b>must</b> go up.</p>",
 rulesB:"<h3>Table piles</h3><p>Build <b>down in alternating colours</b> — a red queen on a black king, a black jack on her. Only the top card moves. <b>An empty space takes any card.</b></p>",
 rulesC:"<h3>Loading your opponent</h3><p>You may put a card on your opponent's <b>reserve</b> and <b>waste</b> — <b>same suit, one up or down</b>. On 9♠ you can put 8♠ or 10♠. The card becomes theirs. You can load from your reserve, your turned card and the table.</p>",
-rulesD:"<h3>Your turn</h3><ol><li>First — any card that can go up to the aces <b>must</b> go up.</li><li>Then — if the top of your reserve can move (to the table, the aces or onto your opponent), you <b>must</b> move it before turning from stock.</li><li>Arrange the table as you like and turn <b>one card</b> from your stock. You may play it — and turn another.</li><li>A turned card you don't play goes on your <b>waste</b>, and <b>your turn ends</b>.</li></ol><p>Stock finished? The waste turns over into a new stock. Stock and waste both empty? Play from the reserve and the table, and \"pass\".</p><h3>Touch!</h3><p><b>Beginner rules:</b> the app won't let you break the order, and explains what comes first.</p><p><b>Classic rules:</b> mistakes are allowed. If your opponent didn't play a card up to the aces, turned from stock while the reserve could move, or <b>touched a card and played another</b> (touch it — play it!) — you have <b>5 seconds</b> to press <b>Touch!</b>. The wrong move is undone and the turn is yours. Touch without a mistake? Nothing happens, but the button locks for a few seconds.</p><h3>Scoring</h3><p>The winner gets <b>30</b>, plus <b>2</b> for every card left in the opponent's reserve, plus <b>1</b> for every card left in their stock and waste. In a match — first to 100 (or 200). If nobody makes progress for a long time — draw.</p><h3>Tips</h3><ul><li>The reserve is what matters — every card there is worth 2 to your opponent.</li><li>An empty space before you turn a card is great: whatever you turn fits there and your turn goes on. An empty space when your turn ends is a gift.</li><li>Loading your opponent's reserve is the strongest move in the game.</li></ul>"
+rulesD:"<h3>Your turn</h3><ol><li>First — any card that can go up to the aces <b>must</b> go up.</li><li>Then — if the top of your reserve can move (to the table, the aces or onto your opponent), you <b>must</b> move it before turning from stock.</li><li>Arrange the table as you like and turn <b>one card</b> from your stock. You may play it — and turn another.</li><li>A turned card you don't play goes on your <b>waste</b>, and <b>your turn ends</b>.</li></ol><p>Stock finished? The waste turns over into a new stock. Stock and waste both empty? Play from the reserve and the table, and \"pass\".</p><h3>Touch!</h3><p><b>Beginner rules:</b> the app won't let you break the order, and explains what comes first.</p><p><b>Classic rules:</b> mistakes are allowed. If your opponent didn't play a card up to the aces, turned from stock while the reserve could move, or <b>touched a card and played another</b> (touch it — play it!) — you have <b>5 seconds</b> to press <b>Touch!</b>. The wrong move is undone and the turn is yours. Touch without a mistake? Nothing happens, but the button locks for a few seconds.</p><h3>Scoring</h3><p>The winner gets <b>30</b>, plus <b>2</b> for every card left in the opponent's reserve, plus <b>1</b> for every card left in their stock and waste. In a match — first to 100 (or 200). If nobody makes progress for a long time — draw.</p><h3>Tips</h3><ul><li>The reserve is what matters — every card there is worth 2 to your opponent.</li><li>An empty space before you turn a card is great: whatever you turn fits there and your turn goes on. An empty space when your turn ends is a gift.</li><li>Loading your opponent's reserve is the strongest move in the game.</li></ul>",
+bUp:"To aces",
+talkLbl:"Talking characters",
+talkSub:"The computer players react with a short line at big moments",
+gTouch:"Touch",
+gSpeed:"Speed",
+gameLbl:"Game",
+sTagline:"Speed: you both play at the same time, no turns. Put down a card one up or one down — the faster one wins!",
+tDesc:"Touch — take turns, build up to the aces and load your opponent",
+sDesc:"Speed — both at once, the fastest wins",
+slvSub0:"Slow, and doesn't always pick the best card.",
+slvSub1:"A good pace, and looks for runs of cards.",
+slvSub2:"Very fast. You'll need quick fingers!",
+sSeries:"How many rounds",
+sOne:"One round",
+sBo3:"Best of 3",
+sBo5:"Best of 5",
+sTwoSub:"Put the phone in the middle — each plays from their own side, at the same time.",
+sDraw:"Draw",
+sSide:"Side",
+sReady:"Ready",
+sFlip:"Flip",
+sWait:"Wait... we haven't started yet",
+sGetReady:"Get ready...",
+sGo:"Go! Put down a card one up or one down",
+sNoMove:"No move — press Flip",
+sWaitFlip:"Waiting for {0} to press Flip",
+sLeftN:"{0} left",
+sPlaysN:"played {0}",
+sMatchTo:"Match: first to {0} wins",
+sNextRound:"Next round",
+sRoundsWon:"Rounds won",
+sPlaysAvg:"Cards per round (average)",
+rulesSpeed:"<h3>Goal</h3><p>Be the first to get rid of all your cards: <b>5 in hand</b> and <b>15 in your draw pile</b>. No turns — <b>you both play at the same time</b>.</p><h3>Setup</h3><p>One deck. Each player gets 5 cards in hand and 15 in a draw pile. At the sides are <b>two side stacks</b> of 6. When the round starts, one card from each side stack is turned — these are the <b>two piles in the middle</b>.</p><h3>What you can play</h3><p>A card <b>one up or one down</b> from the top card of either pile — <b>any suit, any colour</b>. On a 7 you can play a 6 or an 8. <b>King and Ace connect</b>: an Ace goes on a King and a King on an Ace.</p><p>Tap a card to play it on the best pile. Want to choose? Drag it there. Your hand refills from your draw pile by itself.</p><h3>Stuck?</h3><p>When you have no move, press <b>Flip</b>. When you've both pressed it, a new card is turned from each side stack. Side stacks empty? The middle piles are shuffled into new side stacks.</p><h3>Winning</h3><p>The first to get rid of all their cards wins the round. Play one round, best of 3 or best of 5.</p><h3>Tips</h3><ul><li>Look for runs: 5, 6, 7 — three cards in a second.</li><li>Keep your eyes on both piles.</li><li>On one phone — put it in the middle and both tap at once.</li></ul>",
+tk0_start:"Let's go, show me what you've got!|C'mon, I'm feeling lucky today 😄",
+tk0_load:"Boom! Here's a gift 🎁|This one's for you, bro",
+tk0_loaded:"Oh no, why me?!|Ouch, that hurt 😅",
+tk0_caught:"Touch! Got you! 😎|Saw that! Touch!",
+tk0_got:"Oops... didn't notice 🙈|Come on, I forgot once!",
+tk0_win:"I won! No way! 🎉|Yes! Another one?",
+tk0_lose:"Well played, you were better 👏|OK, you got me this time. Next time!",
+tk1_start:"Sit down, dear, let's play a little ☕|Grandma played this before you were born 😉",
+tk1_load:"Here, sweetie, it's for you 😊|Grandma is handing out gifts today",
+tk1_loaded:"Oh, is that how you treat Grandma?|Tsk tsk, I saw that!",
+tk1_caught:"Touch! Grandma sees everything 👀|Uh-uh! Touch, sweetie.",
+tk1_got:"Oh, my glasses... 👓|Well, you caught Grandma. Good for you.",
+tk1_win:"Grandma still knows how to play 💪|I won! Now let's eat something.",
+tk1_lose:"Well done, sweetie! So proud ❤️|You beat Grandma. Come again?",
+tk2_start:"Every card tells a story. Let us begin.|Patience. The game is long.",
+tk2_load:"A card is not thrown — it is sent.|You will have to carry this one.",
+tk2_loaded:"A fine move. Noted.|Interesting. I did not expect that.",
+tk2_caught:"Touch. Order is everything.|Haste is the player's enemy. Touch.",
+tk2_got:"Your eyes are sharp. I learned something.|Even the master errs.",
+tk2_win:"Victory belongs to the patient.|A good game. Almost.",
+tk2_lose:"The student has surpassed the master. Well done.|You have proven yourself. A bow 🙇"
 };
 
 /* ---- i18n/ru.js ---- */
@@ -1339,7 +1593,61 @@ phNice:"Отличный ход!", phHurry:"Ну… твой ход 😅", phLuc
 rulesA:"<h3>Цель</h3><p>У каждого игрока своя полная колода. Побеждает тот, кто первым избавится от всех карт: <b>резерва</b>, <b>колоды</b> и <b>сброса</b>.</p><h3>Раскладка</h3><p>Каждый кладёт <b>13 карт в резерв</b> (верхняя открыта) и четыре открытые карты на свою сторону стола — всего <b>8 общих стопок стола</b>. Остальное — закрытая <b>колода</b>. В центре место для <b>8 стопок тузов</b>.</p><h3>Стопки тузов</h3><p>Общие для обоих. Собираются <b>от туза до короля по масти</b>. Открытый туз <b>обязан</b> подняться.</p>",
 rulesB:"<h3>Стопки стола</h3><p>Собираются <b>по убыванию с чередованием цвета</b> — красная дама на чёрного короля, на неё чёрный валет. Двигается только верхняя карта. <b>Пустое место принимает любую карту.</b></p>",
 rulesC:"<h3>Подкидывание</h3><p>Можно класть карту на <b>резерв</b> и <b>сброс</b> соперника — <b>та же масть, на один выше или ниже</b>. На 9♠ можно 8♠ или 10♠. Карта становится его. Подкидывать можно из резерва, открытой карты и со стола.</p>",
-rulesD:"<h3>Ход</h3><ol><li>Сначала — любая карта, которая может подняться на тузы, <b>обязана</b> подняться.</li><li>Затем — если верхняя карта резерва может сходить (на стол, на тузы или сопернику), её <b>нужно</b> сыграть до того, как открывать колоду.</li><li>Переложите стол как хотите и откройте <b>одну карту</b> из колоды. Её можно сыграть — и открыть следующую.</li><li>Несыгранная открытая карта идёт в <b>сброс</b>, и <b>ход заканчивается</b>.</li></ol><p>Колода кончилась? Сброс переворачивается и становится новой колодой. Пусты и колода, и сброс? Играйте из резерва и со стола и «пасуйте».</p><h3>Тач!</h3><p><b>Для новичков:</b> приложение не даёт нарушить порядок и объясняет, что сначала.</p><p><b>Классика:</b> ошибаться можно. Если соперник не поднял карту на тузы открыл колоду, когда резерв мог ходить, или <b>тронул карту и сыграл другой</b> (тронул — ходи!) — у вас <b>5 секунд</b>, чтобы нажать <b>«Тач!»</b>. Неверный ход отменяется, и ход ваш. «Тач» без ошибки? Ничего не происходит, но кнопка блокируется на несколько секунд.</p><h3>Очки</h3><p>Победитель получает <b>30</b>, плюс <b>2</b> за каждую карту в резерве соперника и <b>1</b> за каждую карту в его колоде и сбросе. В матче — кто первым до 100 (или 200). Если долго никто не продвигается — ничья.</p><h3>Советы</h3><ul><li>Главное — резерв: каждая карта там стоит сопернику 2 очка.</li><li>Пустое место перед тем, как открыть карту, — отлично: любая карта туда ляжет, и ход продолжится. Пустое место в конце хода — подарок сопернику.</li><li>Подкинуть в резерв соперника — самый сильный ход в игре.</li></ul>"
+rulesD:"<h3>Ход</h3><ol><li>Сначала — любая карта, которая может подняться на тузы, <b>обязана</b> подняться.</li><li>Затем — если верхняя карта резерва может сходить (на стол, на тузы или сопернику), её <b>нужно</b> сыграть до того, как открывать колоду.</li><li>Переложите стол как хотите и откройте <b>одну карту</b> из колоды. Её можно сыграть — и открыть следующую.</li><li>Несыгранная открытая карта идёт в <b>сброс</b>, и <b>ход заканчивается</b>.</li></ol><p>Колода кончилась? Сброс переворачивается и становится новой колодой. Пусты и колода, и сброс? Играйте из резерва и со стола и «пасуйте».</p><h3>Тач!</h3><p><b>Для новичков:</b> приложение не даёт нарушить порядок и объясняет, что сначала.</p><p><b>Классика:</b> ошибаться можно. Если соперник не поднял карту на тузы открыл колоду, когда резерв мог ходить, или <b>тронул карту и сыграл другой</b> (тронул — ходи!) — у вас <b>5 секунд</b>, чтобы нажать <b>«Тач!»</b>. Неверный ход отменяется, и ход ваш. «Тач» без ошибки? Ничего не происходит, но кнопка блокируется на несколько секунд.</p><h3>Очки</h3><p>Победитель получает <b>30</b>, плюс <b>2</b> за каждую карту в резерве соперника и <b>1</b> за каждую карту в его колоде и сбросе. В матче — кто первым до 100 (или 200). Если долго никто не продвигается — ничья.</p><h3>Советы</h3><ul><li>Главное — резерв: каждая карта там стоит сопернику 2 очка.</li><li>Пустое место перед тем, как открыть карту, — отлично: любая карта туда ляжет, и ход продолжится. Пустое место в конце хода — подарок сопернику.</li><li>Подкинуть в резерв соперника — самый сильный ход в игре.</li></ul>",
+bUp:"На тузы",
+talkLbl:"Говорящие персонажи",
+talkSub:"Компьютерные игроки отвечают короткой фразой в важные моменты",
+gTouch:"Тач",
+gSpeed:"Спид",
+gameLbl:"Игра",
+sTagline:"Спид: вы оба играете одновременно, без ходов. Кладите карту на одну выше или ниже — кто быстрее, тот и победил!",
+tDesc:"Тач — по очереди, собирайте на тузы и подкидывайте сопернику",
+sDesc:"Спид — оба сразу, побеждает самый быстрый",
+slvSub0:"Медленный и не всегда выбирает лучшую карту.",
+slvSub1:"Хороший темп, ищет цепочки карт.",
+slvSub2:"Очень быстрый. Понадобятся ловкие пальцы!",
+sSeries:"Сколько раундов",
+sOne:"Один раунд",
+sBo3:"До 2 побед из 3",
+sBo5:"До 3 побед из 5",
+sTwoSub:"Положите телефон посередине — каждый играет со своей стороны, одновременно.",
+sDraw:"Колода",
+sSide:"Сбоку",
+sReady:"Готов",
+sFlip:"Открыть",
+sWait:"Подождите... ещё не начали",
+sGetReady:"Приготовьтесь...",
+sGo:"Вперёд! Кладите карту на одну выше или ниже",
+sNoMove:"Нет хода — нажмите «Открыть»",
+sWaitFlip:"Ждём, пока {0} нажмёт «Открыть»",
+sLeftN:"осталось {0}",
+sPlaysN:"сыграно {0}",
+sMatchTo:"Матч: до {0} побед",
+sNextRound:"Следующий раунд",
+sRoundsWon:"Выиграно раундов",
+sPlaysAvg:"Карт за раунд (в среднем)",
+rulesSpeed:"<h3>Цель</h3><p>Первым избавиться от всех карт: <b>5 в руке</b> и <b>15 в колоде</b>. Ходов нет — <b>вы оба играете одновременно</b>.</p><h3>Раскладка</h3><p>Одна колода. Каждый получает 5 карт в руку и 15 в колоду. По бокам — <b>две боковые стопки</b> по 6. В начале раунда из каждой боковой стопки открывается карта — это <b>две стопки посередине</b>.</p><h3>Что можно класть</h3><p>Карту <b>на одну выше или ниже</b> верхней карты любой стопки — <b>масть и цвет не важны</b>. На 7 можно 6 или 8. <b>Король и туз соединяются</b>: на короля можно туза, на туза — короля.</p><p>Нажмите на карту — она ляжет на лучшую стопку. Хотите выбрать? Перетащите. Рука пополняется из колоды сама.</p><h3>Застряли?</h3><p>Если хода нет, нажмите <b>«Открыть»</b>. Когда нажали оба — из каждой боковой стопки открывается новая карта. Боковые стопки кончились? Стопки посередине перемешиваются в новые боковые.</p><h3>Победа</h3><p>Кто первым избавился от всех карт — выиграл раунд. Один раунд, до 2 из 3 или до 3 из 5.</p><h3>Советы</h3><ul><li>Ищите цепочки: 5, 6, 7 — три карты за секунду.</li><li>Следите за обеими стопками.</li><li>На одном телефоне — положите его посередине и играйте вдвоём одновременно.</li></ul>",
+tk0_start:"Погнали, покажи, что умеешь!|Давай, мне сегодня везёт 😄",
+tk0_load:"Опа! Держи подарок 🎁|Это тебе, братан",
+tk0_loaded:"Ой нет, почему мне?!|Ай, больно 😅",
+tk0_caught:"Тач! Поймал! 😎|Видел, видел! Тач!",
+tk0_got:"Упс... не заметил 🙈|Ну, один раз забыл!",
+tk0_win:"Я выиграл! Не верю! 🎉|Есть! Ещё одну?",
+tk0_lose:"Молодец, ты был лучше 👏|Ладно, в этот раз ты. В следующий раз!",
+tk1_start:"Садись, дорогой, поиграем ☕|Бабушка играла в это ещё до тебя 😉",
+tk1_load:"Держи, милый, это тебе 😊|Бабушка сегодня раздаёт подарки",
+tk1_loaded:"Ой, разве так с бабушкой?|Ай-ай-ай, я всё видела!",
+tk1_caught:"Тач! Бабушка всё видит 👀|А-а! Тач, милый.",
+tk1_got:"Ой, мои очки... 👓|Поймал бабушку. Молодец.",
+tk1_win:"Бабушка ещё умеет играть 💪|Выиграла! А теперь покушаем.",
+tk1_lose:"Молодец, милый! Горжусь ❤️|Обыграл бабушку. Придёшь ещё?",
+tk2_start:"Каждая карта — история. Начнём.|Терпение. Игра долгая.",
+tk2_load:"Карту не бросают — её посылают.|Это тебе придётся нести.",
+tk2_loaded:"Хороший ход. Запомню.|Интересно. Не ожидал.",
+tk2_caught:"Тач. Порядок — это всё.|Спешка — враг игрока. Тач.",
+tk2_got:"Острый глаз. Я кое-чему научился.|И мастер ошибается.",
+tk2_win:"Победа принадлежит терпеливым.|Хорошая игра. Почти.",
+tk2_lose:"Ученик превзошёл учителя. Браво.|Ты доказал своё. Поклон 🙇"
 };
 
 /* ---- i18n/es.js ---- */
@@ -1400,7 +1708,61 @@ phNice:"¡Buena jugada!", phHurry:"Venga… te toca 😅", phLucky:"¡Qué suert
 rulesA:"<h3>Objetivo</h3><p>Cada jugador tiene su propia baraja completa. Gana quien primero se quede sin cartas: <b>reserva</b>, <b>mazo</b> y <b>descarte</b>.</p><h3>Preparación</h3><p>Cada uno pone <b>13 cartas en la reserva</b> (la de arriba destapada) y cuatro cartas destapadas en su lado de la mesa — <b>8 montones de mesa</b> compartidos en total. El resto es el <b>mazo</b>, tapado. En el centro hay sitio para <b>8 montones de ases</b>.</p><h3>Montones de ases</h3><p>Compartidos por ambos. Se construyen <b>del as al rey, por palo</b>. Un as a la vista <b>debe</b> subir.</p>",
 rulesB:"<h3>Montones de mesa</h3><p>Se construyen <b>en orden descendente alternando colores</b> — una reina roja sobre un rey negro, y sobre ella una jota negra. Solo se mueve la carta de arriba. <b>Un hueco acepta cualquier carta.</b></p>",
 rulesC:"<h3>Cargar al rival</h3><p>Puedes poner una carta en la <b>reserva</b> y el <b>descarte</b> del rival — <b>mismo palo, uno más o uno menos</b>. Sobre 9♠ va 8♠ o 10♠. La carta pasa a ser suya. Puedes cargar desde tu reserva, tu carta destapada y la mesa.</p>",
-rulesD:"<h3>Tu turno</h3><ol><li>Primero — toda carta que pueda subir a los ases <b>debe</b> subir.</li><li>Después — si la carta de arriba de tu reserva puede moverse (a la mesa, a los ases o al rival), <b>debes</b> moverla antes de destapar del mazo.</li><li>Ordena la mesa a tu gusto y destapa <b>una carta</b> del mazo. Puedes jugarla — y destapar otra.</li><li>La carta destapada que no juegues va a tu <b>descarte</b>, y <b>tu turno termina</b>.</li></ol><p>¿Se acabó el mazo? El descarte se da la vuelta y es el nuevo mazo. ¿Mazo y descarte vacíos? Juega desde la reserva y la mesa, y \"pasa\".</p><h3>¡Touch!</h3><p><b>Reglas de principiante:</b> la app no deja romper el orden y explica qué va primero.</p><p><b>Reglas clásicas:</b> se puede fallar. Si el rival no subió una carta a los ases, destapó del mazo cuando la reserva podía moverse, o <b>tocó una carta y jugó otra</b> (¡carta tocada, carta jugada!) — tienes <b>5 segundos</b> para pulsar <b>¡Touch!</b>. La jugada mala se deshace y el turno es tuyo. ¿Touch sin error? No pasa nada, pero el botón se bloquea unos segundos.</p><h3>Puntos</h3><p>El ganador recibe <b>30</b>, más <b>2</b> por cada carta que le quede al rival en la reserva, más <b>1</b> por cada carta en su mazo y descarte. En una serie — el primero en llegar a 100 (o 200). Si nadie avanza durante mucho tiempo — empate.</p><h3>Consejos</h3><ul><li>Lo importante es la reserva: cada carta ahí vale 2 para el rival.</li><li>Un hueco antes de destapar es estupendo: lo que salga cabe ahí y sigues jugando. Un hueco al terminar el turno es un regalo.</li><li>Cargar la reserva del rival es la jugada más fuerte del juego.</li></ul>"
+rulesD:"<h3>Tu turno</h3><ol><li>Primero — toda carta que pueda subir a los ases <b>debe</b> subir.</li><li>Después — si la carta de arriba de tu reserva puede moverse (a la mesa, a los ases o al rival), <b>debes</b> moverla antes de destapar del mazo.</li><li>Ordena la mesa a tu gusto y destapa <b>una carta</b> del mazo. Puedes jugarla — y destapar otra.</li><li>La carta destapada que no juegues va a tu <b>descarte</b>, y <b>tu turno termina</b>.</li></ol><p>¿Se acabó el mazo? El descarte se da la vuelta y es el nuevo mazo. ¿Mazo y descarte vacíos? Juega desde la reserva y la mesa, y \"pasa\".</p><h3>¡Touch!</h3><p><b>Reglas de principiante:</b> la app no deja romper el orden y explica qué va primero.</p><p><b>Reglas clásicas:</b> se puede fallar. Si el rival no subió una carta a los ases, destapó del mazo cuando la reserva podía moverse, o <b>tocó una carta y jugó otra</b> (¡carta tocada, carta jugada!) — tienes <b>5 segundos</b> para pulsar <b>¡Touch!</b>. La jugada mala se deshace y el turno es tuyo. ¿Touch sin error? No pasa nada, pero el botón se bloquea unos segundos.</p><h3>Puntos</h3><p>El ganador recibe <b>30</b>, más <b>2</b> por cada carta que le quede al rival en la reserva, más <b>1</b> por cada carta en su mazo y descarte. En una serie — el primero en llegar a 100 (o 200). Si nadie avanza durante mucho tiempo — empate.</p><h3>Consejos</h3><ul><li>Lo importante es la reserva: cada carta ahí vale 2 para el rival.</li><li>Un hueco antes de destapar es estupendo: lo que salga cabe ahí y sigues jugando. Un hueco al terminar el turno es un regalo.</li><li>Cargar la reserva del rival es la jugada más fuerte del juego.</li></ul>",
+bUp:"A los ases",
+talkLbl:"Personajes que hablan",
+talkSub:"Los jugadores de la máquina reaccionan con una frase corta en los grandes momentos",
+gTouch:"Touch",
+gSpeed:"Speed",
+gameLbl:"Juego",
+sTagline:"Speed: jugáis los dos a la vez, sin turnos. Pon una carta uno arriba o uno abajo — ¡gana el más rápido!",
+tDesc:"Touch — por turnos, sube a los ases y carga al rival",
+sDesc:"Speed — los dos a la vez, gana el más rápido",
+slvSub0:"Lento, y no siempre elige la mejor carta.",
+slvSub1:"Buen ritmo, y busca escaleras de cartas.",
+slvSub2:"Muy rápido. ¡Necesitarás dedos ágiles!",
+sSeries:"Cuántas rondas",
+sOne:"Una ronda",
+sBo3:"Al mejor de 3",
+sBo5:"Al mejor de 5",
+sTwoSub:"Pon el móvil en medio — cada uno juega desde su lado, a la vez.",
+sDraw:"Mazo",
+sSide:"Lado",
+sReady:"Listo",
+sFlip:"Destapar",
+sWait:"Espera... aún no hemos empezado",
+sGetReady:"Preparados...",
+sGo:"¡Ya! Pon una carta uno arriba o uno abajo",
+sNoMove:"Sin jugada — pulsa Destapar",
+sWaitFlip:"Esperando a que {0} pulse Destapar",
+sLeftN:"quedan {0}",
+sPlaysN:"jugó {0}",
+sMatchTo:"Serie: el primero en {0} victorias",
+sNextRound:"Siguiente ronda",
+sRoundsWon:"Rondas ganadas",
+sPlaysAvg:"Cartas por ronda (media)",
+rulesSpeed:"<h3>Objetivo</h3><p>Ser el primero en quedarse sin cartas: <b>5 en la mano</b> y <b>15 en tu mazo</b>. No hay turnos — <b>jugáis los dos a la vez</b>.</p><h3>Preparación</h3><p>Una baraja. Cada jugador recibe 5 cartas en la mano y 15 en su mazo. A los lados hay <b>dos montones laterales</b> de 6. Al empezar la ronda se destapa una carta de cada montón lateral — son <b>los dos montones del centro</b>.</p><h3>Qué se puede jugar</h3><p>Una carta <b>uno arriba o uno abajo</b> de la carta de arriba de cualquier montón — <b>cualquier palo y color</b>. Sobre un 7 va un 6 o un 8. <b>Rey y As se unen</b>: sobre un Rey va un As y sobre un As un Rey.</p><p>Toca una carta y va al mejor montón. ¿Quieres elegir? Arrástrala. La mano se rellena sola desde tu mazo.</p><h3>¿Atascados?</h3><p>Si no tienes jugada, pulsa <b>Destapar</b>. Cuando los dos lo habéis pulsado, se destapa una carta nueva de cada montón lateral. ¿Se acabaron los laterales? Los montones del centro se barajan en laterales nuevos.</p><h3>Victoria</h3><p>El primero en quedarse sin cartas gana la ronda. Una ronda, al mejor de 3 o al mejor de 5.</p><h3>Consejos</h3><ul><li>Busca escaleras: 5, 6, 7 — tres cartas en un segundo.</li><li>Mira siempre los dos montones.</li><li>En un móvil — ponlo en medio y tocad los dos a la vez.</li></ul>",
+tk0_start:"¡Vamos, enséñame lo que tienes!|Venga, hoy me siento con suerte 😄",
+tk0_load:"¡Toma! Un regalito 🎁|Esta es para ti, colega",
+tk0_loaded:"¡Ay no! ¿Por qué a mí?|Uf, eso dolió 😅",
+tk0_caught:"¡Touch! ¡Te pillé! 😎|¡Lo vi! ¡Touch!",
+tk0_got:"Uy... no me di cuenta 🙈|¡Venga ya, solo una vez!",
+tk0_win:"¡Gané! ¡No me lo creo! 🎉|¡Sí! ¿Otra?",
+tk0_lose:"Bien jugado, fuiste mejor 👏|Vale, esta vez ganaste tú. ¡La próxima!",
+tk1_start:"Siéntate, cariño, juguemos un rato ☕|La abuela jugaba a esto antes de que nacieras 😉",
+tk1_load:"Toma, cielo, para ti 😊|Hoy la abuela reparte regalos",
+tk1_loaded:"¿Así se trata a la abuela?|Ay, ay, ay, ¡lo he visto!",
+tk1_caught:"¡Touch! La abuela lo ve todo 👀|¡Ajá! Touch, cariño.",
+tk1_got:"Ay, mis gafas... 👓|Pillaste a la abuela. Muy bien.",
+tk1_win:"La abuela aún sabe jugar 💪|¡Gané! Ahora a comer algo.",
+tk1_lose:"¡Muy bien, cariño! Qué orgullo ❤️|Le ganaste a la abuela. ¿Vuelves?",
+tk2_start:"Cada carta cuenta una historia. Empecemos.|Paciencia. La partida es larga.",
+tk2_load:"Una carta no se tira: se envía.|Esta tendrás que cargarla tú.",
+tk2_loaded:"Buena jugada. Anotado.|Interesante. No lo esperaba.",
+tk2_caught:"Touch. El orden lo es todo.|La prisa es enemiga del jugador. Touch.",
+tk2_got:"Tienes buen ojo. He aprendido algo.|Hasta el maestro se equivoca.",
+tk2_win:"La victoria es del paciente.|Buena partida. Casi.",
+tk2_lose:"El alumno ha superado al maestro. Bravo.|Te lo has ganado. Una reverencia 🙇"
 };
 
 /* ---- i18n/ar.js ---- */
@@ -1461,7 +1823,61 @@ phNice:"حركة جميلة!", phHurry:"يلا… دورك 😅", phLucky:"يا 
 rulesA:"<h3>الهدف</h3><p>لكل لاعب رزمة كاملة خاصة به. يفوز أول من يتخلص من كل أوراقه: <b>الاحتياط</b> و<b>الرزمة</b> و<b>الرمي</b>.</p><h3>الترتيب</h3><p>يضع كل لاعب <b>13 ورقة في الاحتياط</b> (العليا مكشوفة) وأربع أوراق مكشوفة في جهته من الطاولة — <b>8 أكوام طاولة</b> مشتركة. الباقي هو <b>الرزمة</b> المغلقة. في الوسط مكان لـ<b>8 أكوام آصات</b>.</p><h3>أكوام الآصات</h3><p>مشتركة بين اللاعبين. تُبنى <b>من الآص إلى الملك حسب النوع</b>. الآص المكشوف <b>يجب</b> أن يرتفع.</p>",
 rulesB:"<h3>أكوام الطاولة</h3><p>تُبنى <b>تنازليًا بألوان متناوبة</b> — ملكة حمراء على ملك أسود، وعليها شاب أسود. تتحرك الورقة العليا فقط. <b>المكان الفارغ يقبل أي ورقة.</b></p>",
 rulesC:"<h3>تحميل الخصم</h3><p>يمكنك وضع ورقة على <b>احتياط</b> الخصم و<b>رميه</b> — <b>النوع نفسه، أعلى أو أقل بواحد</b>. على 9♠ يمكن 8♠ أو 10♠. تصبح الورقة له. يمكن التحميل من الاحتياط والورقة المكشوفة والطاولة.</p>",
-rulesD:"<h3>الدور</h3><ol><li>أولًا — كل ورقة يمكن أن ترتفع إلى الآصات <b>يجب</b> أن ترتفع.</li><li>ثم — إذا كانت الورقة العليا في الاحتياط تستطيع الحركة (إلى الطاولة أو الآصات أو على الخصم)، <b>يجب</b> تحريكها قبل الكشف من الرزمة.</li><li>رتّب الطاولة كما تشاء واكشف <b>ورقة واحدة</b> من الرزمة. يمكنك لعبها — وكشف أخرى.</li><li>الورقة المكشوفة التي لم تلعبها تذهب إلى <b>الرمي</b>، و<b>ينتهي دورك</b>.</li></ol><p>انتهت الرزمة؟ يُقلب الرمي ليصبح رزمة جديدة. الرزمة والرمي فارغان؟ العب من الاحتياط والطاولة ثم \"مرّر\".</p><h3>تاتش!</h3><p><b>قواعد المبتدئين:</b> التطبيق لا يسمح بكسر الترتيب ويشرح ما يأتي أولًا.</p><p><b>القواعد الكلاسيكية:</b> الخطأ مسموح. إذا لم يرفع الخصم ورقة إلى الآصات، أو كشف من الرزمة بينما كان الاحتياط يستطيع الحركة، أو <b>لمس ورقة ولعب غيرها</b> (لمستها — العبها!) — لديك <b>5 ثوانٍ</b> لتضغط <b>تاتش!</b>. تُلغى الحركة الخاطئة والدور لك. تاتش بلا خطأ؟ لا يحدث شيء، لكن الزر يُقفل بضع ثوانٍ.</p><h3>النقاط</h3><p>الفائز يحصل على <b>30</b>، و<b>2</b> لكل ورقة بقيت في احتياط الخصم، و<b>1</b> لكل ورقة بقيت في رزمته ورميه. في السلسلة — أول من يصل إلى 100 (أو 200). إذا لم يتقدم أحد لوقت طويل — تعادل.</p><h3>نصائح</h3><ul><li>الاحتياط هو الأهم — كل ورقة فيه تساوي نقطتين للخصم.</li><li>مكان فارغ قبل أن تكشف ورقة — ممتاز: أي ورقة تدخله ويستمر دورك. مكان فارغ عند نهاية دورك — هدية للخصم.</li><li>تحميل احتياط الخصم هو أقوى حركة في اللعبة.</li></ul>"
+rulesD:"<h3>الدور</h3><ol><li>أولًا — كل ورقة يمكن أن ترتفع إلى الآصات <b>يجب</b> أن ترتفع.</li><li>ثم — إذا كانت الورقة العليا في الاحتياط تستطيع الحركة (إلى الطاولة أو الآصات أو على الخصم)، <b>يجب</b> تحريكها قبل الكشف من الرزمة.</li><li>رتّب الطاولة كما تشاء واكشف <b>ورقة واحدة</b> من الرزمة. يمكنك لعبها — وكشف أخرى.</li><li>الورقة المكشوفة التي لم تلعبها تذهب إلى <b>الرمي</b>، و<b>ينتهي دورك</b>.</li></ol><p>انتهت الرزمة؟ يُقلب الرمي ليصبح رزمة جديدة. الرزمة والرمي فارغان؟ العب من الاحتياط والطاولة ثم \"مرّر\".</p><h3>تاتش!</h3><p><b>قواعد المبتدئين:</b> التطبيق لا يسمح بكسر الترتيب ويشرح ما يأتي أولًا.</p><p><b>القواعد الكلاسيكية:</b> الخطأ مسموح. إذا لم يرفع الخصم ورقة إلى الآصات، أو كشف من الرزمة بينما كان الاحتياط يستطيع الحركة، أو <b>لمس ورقة ولعب غيرها</b> (لمستها — العبها!) — لديك <b>5 ثوانٍ</b> لتضغط <b>تاتش!</b>. تُلغى الحركة الخاطئة والدور لك. تاتش بلا خطأ؟ لا يحدث شيء، لكن الزر يُقفل بضع ثوانٍ.</p><h3>النقاط</h3><p>الفائز يحصل على <b>30</b>، و<b>2</b> لكل ورقة بقيت في احتياط الخصم، و<b>1</b> لكل ورقة بقيت في رزمته ورميه. في السلسلة — أول من يصل إلى 100 (أو 200). إذا لم يتقدم أحد لوقت طويل — تعادل.</p><h3>نصائح</h3><ul><li>الاحتياط هو الأهم — كل ورقة فيه تساوي نقطتين للخصم.</li><li>مكان فارغ قبل أن تكشف ورقة — ممتاز: أي ورقة تدخله ويستمر دورك. مكان فارغ عند نهاية دورك — هدية للخصم.</li><li>تحميل احتياط الخصم هو أقوى حركة في اللعبة.</li></ul>",
+bUp:"إلى الآصات",
+talkLbl:"شخصيات تتكلم",
+talkSub:"لاعبو الحاسوب يردّون بجملة قصيرة في اللحظات المهمة",
+gTouch:"تاتش",
+gSpeed:"سبيد",
+gameLbl:"اللعبة",
+sTagline:"سبيد: تلعبان معًا في نفس الوقت، بلا أدوار. ضع ورقة أعلى أو أدنى بواحد — والأسرع يفوز!",
+tDesc:"تاتش — بالدور، ارفع إلى الآصات وحمّل الخصم",
+sDesc:"سبيد — معًا في نفس الوقت، الأسرع يفوز",
+slvSub0:"بطيء، ولا يختار دائمًا أفضل ورقة.",
+slvSub1:"إيقاع جيد، ويبحث عن سلاسل أوراق.",
+slvSub2:"سريع جدًا. ستحتاج إلى أصابع خفيفة!",
+sSeries:"كم جولة",
+sOne:"جولة واحدة",
+sBo3:"الأفضل من 3",
+sBo5:"الأفضل من 5",
+sTwoSub:"ضعا الهاتف في الوسط — كل واحد يلعب من جهته، في نفس الوقت.",
+sDraw:"الرزمة",
+sSide:"جانب",
+sReady:"جاهز",
+sFlip:"اكشف",
+sWait:"لحظة... لم نبدأ بعد",
+sGetReady:"استعدّوا...",
+sGo:"بسرعة! ضع ورقة أعلى أو أدنى بواحد",
+sNoMove:"لا حركة لديك — اضغط اكشف",
+sWaitFlip:"بانتظار أن يضغط {0} اكشف",
+sLeftN:"بقي {0}",
+sPlaysN:"لعب {0}",
+sMatchTo:"السلسلة: أول من يصل إلى {0} انتصارات",
+sNextRound:"الجولة التالية",
+sRoundsWon:"جولات فزت بها",
+sPlaysAvg:"أوراق في الجولة (متوسط)",
+rulesSpeed:"<h3>الهدف</h3><p>أن تتخلص أولًا من كل أوراقك: <b>5 في اليد</b> و<b>15 في رزمتك</b>. لا أدوار — <b>تلعبان معًا في نفس الوقت</b>.</p><h3>الترتيب</h3><p>رزمة واحدة. كل لاعب يأخذ 5 أوراق في اليد و15 في رزمته. على الجانبين <b>رزمتان جانبيتان</b> من 6. عند بدء الجولة تُكشف ورقة من كل رزمة جانبية — هاتان هما <b>الكومتان في الوسط</b>.</p><h3>ماذا تضع</h3><p>ورقة <b>أعلى أو أدنى بواحد</b> من الورقة العليا في أي كومة — <b>أي شكل وأي لون</b>. على 7 يمكن 6 أو 8. <b>الملك والآص يتصلان</b>: الآص على الملك والملك على الآص.</p><p>المس الورقة فتذهب إلى أفضل كومة. تريد أن تختار؟ اسحبها إليها. اليد تمتلئ وحدها من رزمتك.</p><h3>علقتما؟</h3><p>إذا لم تكن لديك حركة، اضغط <b>اكشف</b>. عندما تضغطان كلاكما — تُكشف ورقة جديدة من كل رزمة جانبية. انتهت الرزم الجانبية؟ تُخلط الكومتان في الوسط وتصبحان رزمًا جانبية جديدة.</p><h3>الفوز</h3><p>أول من يتخلص من كل أوراقه يفوز بالجولة. جولة واحدة، الأفضل من 3 أو الأفضل من 5.</p><h3>نصائح</h3><ul><li>ابحث عن السلاسل: 5، 6، 7 — ثلاث أوراق في ثانية.</li><li>راقب الكومتين طوال الوقت.</li><li>على هاتف واحد — ضعاه في الوسط والمسا معًا في نفس الوقت.</li></ul>",
+tk0_start:"يلا، وريني شو عندك!|هيا، أشعر أني محظوظ اليوم 😄",
+tk0_load:"هوب! خذ هدية 🎁|هذه لك يا صاحبي",
+tk0_loaded:"لا! لماذا أنا؟!|آخ، هذه مؤلمة 😅",
+tk0_caught:"تاتش! أمسكتك! 😎|رأيتك! تاتش!",
+tk0_got:"أوبس... لم أنتبه 🙈|هيا، نسيت مرة واحدة!",
+tk0_win:"فزت! لا أصدق! 🎉|نعم! جولة أخرى؟",
+tk0_lose:"أحسنت، كنت أفضل مني 👏|حسنًا، فزت هذه المرة. المرة القادمة!",
+tk1_start:"اجلس يا عزيزي، لنلعب قليلًا ☕|جدتك لعبت هذه قبل أن تولد 😉",
+tk1_load:"خذ يا حبيبي، هذه لك 😊|الجدة توزع الهدايا اليوم",
+tk1_loaded:"أهكذا تعامل جدتك؟|تس تس، رأيت ذلك!",
+tk1_caught:"تاتش! الجدة ترى كل شيء 👀|آه-آه! تاتش يا حلو.",
+tk1_got:"آه، نظارتي... 👓|أمسكت الجدة. أحسنت.",
+tk1_win:"الجدة ما زالت تعرف اللعب 💪|فزت! والآن لنأكل شيئًا.",
+tk1_lose:"أحسنت يا حبيبي! فخورة بك ❤️|هزمت جدتك. ستعود مرة أخرى؟",
+tk2_start:"كل ورقة تحكي قصة. لنبدأ.|بصبر. اللعبة طويلة.",
+tk2_load:"الورقة لا تُرمى — بل تُرسل.|هذه ستحملها أنت.",
+tk2_loaded:"حركة جميلة. سجّلتها.|مثير للاهتمام. لم أتوقع ذلك.",
+tk2_caught:"تاتش. الترتيب هو كل شيء.|العجلة عدو اللاعب. تاتش.",
+tk2_got:"عينك حادة. تعلمت شيئًا.|حتى المعلم يخطئ.",
+tk2_win:"النصر للصبور.|لعبة جيدة. تقريبًا.",
+tk2_lose:"التلميذ تفوق على المعلم. أحسنت.|أثبت جدارتك. انحناءة 🙇"
 };
 
 /* ---- table.js ---- */
@@ -1486,10 +1902,11 @@ const isHostOnline = () => isOnline() && G.net.role === 'host';
 const devSeats = () => !G ? [] : G.mode === 'two' ? [0, 1] : G.mode === 'cpu' ? [0] : isGuest() ? [1] : [0];
 function isBot(s) { if (!G) return false; if (G.mode === 'cpu') return s === 1; if (isHostOnline()) return s === 1 && !!G.sub && !guestOnline(); return false; }
 const guestOnline = () => typeof rosterOnline === 'function' && rosterOnline(1);
-function curView() { if (!G) return null; if (isGuest()) return G.v; if (!G.M) return null; return TN.view(G.M, perspective()); }
+function curView() { if (!G || isSpeed()) return null; if (isGuest()) return G.v; if (!G.M) return null; return TN.view(G.M, perspective()); }
 function rulesGame() { return isGuest() ? (G.v ? TN.fromView(G.v) : null) : G.M; }
 function perspective() {
   if (!G) return 0;
+  if (isSpeed()) return isGuest() ? 1 : 0;
   if (G.mode === 'two') { const t = G.M ? G.M.turn : 0; return ST.flip ? t : 0; }
   return isGuest() ? 1 : 0;
 }
@@ -1515,6 +1932,7 @@ function newSession(mode, o) {
   if (mode !== 'online') startGameNo();
 }
 function startGameNo() {
+  if (isSpeed()) return spStartRound();
   clearTimers();
   const first = G.lastFirst == null ? null : 1 - G.lastFirst;
   G.M = TN.newGame({ touch: G.touch, first });
@@ -1522,10 +1940,18 @@ function startGameNo() {
   SEL = null; HINT = null; turnMoves = 0; LASTN = -1; LOCK[0] = LOCK[1] = 0; GRACE[0] = GRACE[1] = 0;
   saveGame(); beep('shuffle');
 }
-function startCpu(lvl, touch, target) { newSession('cpu', { lvl, touch, target }); show('game'); afterChange(); }
+function startCpu(lvl, touch, target) { newSession('cpu', { lvl, touch, target }); show('game'); afterChange(); setTimeout(() => talk('start', true), 900); }
+/* 1.1.1: the computer characters say a short line on big moments (never more than one every few seconds) */
+let TALK_AT = 0;
+function talk(ev, force) {
+  if (!ST.talk || !G || G.mode !== 'cpu' || SCREEN !== 'game') return;
+  if (!force && (Date.now() - TALK_AT < 7000 || Math.random() > .45)) return;
+  const lines = T('tk' + G.lvl + '_' + ev).split('|'); if (!lines[0] || lines[0].startsWith('tk')) return;
+  TALK_AT = Date.now(); bubble(1, lines[Math.floor(Math.random() * lines.length)], 'say');
+}
 function startTwo(names, touch, target) { newSession('two', { names, touch, target }); show('game'); afterChange(); }
 
-function clearTimers() { clearTimeout(aiT); clearTimeout(violT); clearTimeout(catchT); aiT = violT = catchT = null; }
+function clearTimers() { if (typeof spClear === 'function') spClear(); clearTimeout(aiT); clearTimeout(violT); clearTimeout(catchT); aiT = violT = catchT = null; }
 
 /* ---------- acting ---------- */
 const WHY = { found: 'whyFound', reserve: 'whyReserve', touched: 'whyTouched' }, CAUGHT = { found: 'caughtFound', reserve: 'caughtReserve', touched: 'caughtTouched' };
@@ -1557,6 +1983,7 @@ function doAct(s, act) {
   actSound(M.last);
   if (act.a === 'draw' || M.turn !== turnBefore) G.undo = [];
   if (res.viol) openWindow();
+  if (act.a === 'mv' && (act.d === 'OR' || act.d === 'OW') && G.mode === 'cpu') talk(s === 1 ? 'load' : 'loaded');
   SEL = null; HINT = null;
   afterChange();
   return res;
@@ -1599,6 +2026,7 @@ function resolveTouch(seat) {
   if (r.caught) {
     clearTimeout(violT); clearTimeout(catchT); G.undo = []; SEL = null; HINT = null; turnMoves = 0;
     touchShow({ ok: true, caller: seat, by: r.by, why: r.why });
+    if (G.mode === 'cpu') talk(seat === 1 ? 'caught' : 'got', true);
     if (isHostOnline()) LINK.sendTo(1, { type: 'tev', ok: true, caller: seat, by: r.by, why: r.why });
     afterChange();
   } else {
@@ -1628,6 +2056,7 @@ function banner(big, small, cls) {
 /* ---------- after every change ---------- */
 function afterChange() {
   if (!G) return;
+  if (isSpeed()) return spAfter();
   const M = G.M;
   if (M) {
     if (M.turn !== lastTurnSeen) { if (lastTurnSeen >= 0) GRACE[M.turn] = Date.now(); lastTurnSeen = M.turn; turnMoves = 0; if (devSeats().includes(M.turn) && !isBot(M.turn) && !M.over) { beep('turn'); if (G.mode === 'two' && ST.flip) banner(T('turnOf', nameOf(M.turn))); } }
@@ -1640,6 +2069,7 @@ function afterChange() {
 }
 function scheduleBot() {
   clearTimeout(aiT);
+  if (isSpeed()) return spBots();
   if (!G || !G.M || G.M.over || isGuest()) return;
   const t = G.M.turn; if (!isBot(t)) return;
   const fast = ST.speed === 'fast', d = (turnMoves ? (fast ? 260 : 650) : (fast ? 450 : 1000));
@@ -1665,6 +2095,19 @@ function undo() {
   const u = G && G.undo && G.undo.pop(); if (!u || isGuest()) return;
   TN.unsnap(G.M, u.s); G.M.log.length = u.ln; G.M.st = JSON.parse(u.st); G.M.n = u.n; G.M.viol = null; G.M.last = null;
   SEL = null; HINT = null; LASTN = G.M.n; saveGame(); renderGame();
+}
+/* ---------- 1.1.1: send every card that can go up to the aces, one after another ---------- */
+let UPT = null;
+function autoUp() {
+  clearTimeout(UPT);
+  const step = () => {
+    const a = actor(); if (a == null || !G || SCREEN !== 'game') return;
+    if (isGuest() && BUSY) { UPT = setTimeout(step, 150); return; }
+    const f = TN.foundMoves(rulesGame(), a); if (!f.length) return;
+    const pr = s => s === 'R' ? 0 : s === 'D' ? 1 : 2; f.sort((x, y) => pr(x.s) - pr(y.s));
+    humanAct(f[0]); UPT = setTimeout(step, ST.speed === 'fast' ? 200 : 330);
+  };
+  step();
 }
 /* ---------- hint: the hard computer, from what this player can see ---------- */
 function hint() {
@@ -1693,6 +2136,7 @@ function gameOver() {
   recordStats(M.winner, M.pts, M.st, matchOver);
   const me = devSeats().length === 1 ? devSeats()[0] : -1;
   beep(M.winner < 0 ? 'lose' : me < 0 || M.winner === me ? 'win' : 'lose');
+  if (G.mode === 'cpu' && M.winner >= 0) talk(M.winner === 1 ? 'win' : 'lose', true);
   setTimeout(() => showResult(), 700);
 }
 function resultData() {
@@ -1821,6 +2265,8 @@ function fitPiles(host) {
 
 function renderGame() {
   if (!G || SCREEN !== 'game') return;
+  if (isSpeed()) return spRender();
+  $('#game').classList.remove('isSp');
   const v = curView(); const host = $('#tarea');
   if (!v) { host.innerHTML = '<div class="msg">' + esc(isGuest() ? T('waitingHost') : '') + '</div>'; $('#abar').innerHTML = ''; renderTop(); return; }
   const me = perspective(), act = actor();
@@ -1897,6 +2343,7 @@ function renderBar(v, act, me) {
     if (v.drawn >= 0) h += '<button class="btn main" data-k="main">' + esc(T('bDiscard')) + '<small>' + esc(T('bEndTurn')) + '</small></button>';
     else if (TN.canPass(H, act)) h += '<button class="btn main" data-k="main">' + esc(T('bPass')) + '</button>';
     else h += '<button class="btn main" data-k="main">' + esc(T('bDraw')) + '<small>' + esc(T('pStock')) + '</small></button>';
+    if (TN.foundMoves(H, act).length) h += '<button class="btn up" data-k="up">⬆ ' + esc(T('bUp')) + '</button>';
     h += '<button class="btn sm" data-k="hint" aria-label="' + esc(T('hint')) + '">💡</button>';
     if (!isOnline() && v.touch === 'beginner') h += '<button class="btn sm" data-k="undo" aria-label="' + esc(T('undo')) + '" ' + (G.undo && G.undo.length ? '' : 'disabled') + '>↶</button>';
   } else if (!v.over && !tOK) h += '<div class="msg" style="flex:1;align-self:center">' + esc(isGuest() && !G.v ? T('waitingHost') : '') + '</div>';
@@ -1926,8 +2373,11 @@ function tapSource(s) {
     if (real.length && real[0][0] === 'F') { humanAct({ a: 'mv', s, d: real[0] }); return; }
     if (real.length === 1 && s !== 'D') { humanAct({ a: 'mv', s, d: real[0] }); return; }
   }
-  SEL = { s, ts }; HINT = null; beep('card'); holdCard(s); renderGame();
+  SEL = { s, ts }; HINT = null; beep('card'); armHold(s); renderGame();
 }
+/* 1.1.1: a short grace before a pick-up counts as a touch — a big finger that lands on the wrong card can still change its mind */
+const HOLD_MS = 800; let HOLD_T = null;
+function armHold(s) { clearTimeout(HOLD_T); HOLD_T = setTimeout(() => { if (SEL && SEL.s === s && actor() != null) { holdCard(s); renderGame(); } }, HOLD_MS); }
 /* classic rules: picking up a card that can move is "touching" it — it must be played (touch it, play it) */
 function holdCard(s) {
   const a = actor(), H = rulesGame(); if (a == null || !H || H.touch !== 'classic') return;
@@ -1976,7 +2426,7 @@ function bindGame() {
     if (!DRAG || e.pointerId !== DRAG.id) return;
     if (!DRAG.on && Math.hypot(e.clientX - DRAG.x, e.clientY - DRAG.y) > 10) {
       const ts = targetsFor(DRAG.s); if (!ts.length) { DRAG = null; return; }
-      DRAG.on = true; SEL = { s: DRAG.s, ts }; HINT = null; holdCard(DRAG.s); renderGame();
+      DRAG.on = true; SEL = { s: DRAG.s, ts }; HINT = null; armHold(DRAG.s); renderGame();
       const el = srcEl(DRAG.s); const r = el ? el.getBoundingClientRect() : { width: 56 };
       const g = document.createElement('div'); g.className = 'dragGhost'; g.innerHTML = cardHTML(+(el && el.dataset.c), '', 'style="--w:' + r.width + 'px"'); document.body.appendChild(g); DRAG.g = g;
       if (el) el.style.opacity = '.35';
@@ -2008,6 +2458,7 @@ function barClick(k) {
   if (v === 'touch') callTouch(+k.dataset.seat);
   else if (v === 'main') mainAction();
   else if (v === 'hint') hint();
+  else if (v === 'up') autoUp();
   else if (v === 'undo') undo();
   else if (v === 'result') showResult();
 }
@@ -2035,6 +2486,277 @@ async function bigTable() {
   try { await document.documentElement.requestFullscreen(); await screen.orientation.lock('landscape'); }
   catch (e) { toast(T('bigTableNo'), 3500); }
   setTimeout(renderGame, 300);
+}
+
+/* ---- speedui.js ---- */
+/* =====================================================================
+   TouchNest 1.2 — Speed (ספיד) on the shared game screen.
+   Same session object G as Touch, with G.game = 'speed':
+     G.M the Speed state (local / host) · G.v the view (guest) · G.best wins needed · G.score [2] wins
+   Real time: no turns. The computer is a timer per seat; on one phone both players tap at once
+   (pointer events, every finger on its own); online the host checks every play as it arrives.
+   ===================================================================== */
+const isSpeed = () => !!G && G.game === 'speed';
+let SPT = [null, null], SPCD = null, SPLASTN = -1, SPPEND = new Set(), SPRECT = {}, SPD = {};
+const SPBEST = [[1, 'sOne'], [2, 'sBo3'], [3, 'sBo5']];
+
+function spClear() { clearTimeout(SPT[0]); clearTimeout(SPT[1]); SPT = [null, null]; clearTimeout(SPCD); SPCD = null; }
+function spNew(mode, o) {
+  clearTimers(); spClear();
+  G = { game: 'speed', mode, id: Date.now(), names: o.names || [ST.name || T('you'), ''], lvl: o.lvl == null ? 1 : o.lvl, best: o.best || 1,
+    score: [0, 0], gameNo: 0, counted: {}, net: o.net || null };
+}
+function spStartCpu(lvl, best) { spNew('cpu', { lvl, best }); spStartRound(); show('game'); spAfter(); setTimeout(() => talk('start', true), 900); }
+function spStartTwo(names, best) { spNew('two', { names, best }); spStartRound(); show('game'); spAfter(); }
+function spStartRound() {
+  spClear();
+  G.M = SP.newGame(); G.gameNo++; G.mid = G.id + ':' + G.gameNo; G.matchOver = false; G.cdAt = Date.now();
+  SPLASTN = -1; SPPEND.clear(); saveGame(); beep('shuffle');
+}
+const spCdMs = () => ST.speed === 'fast' ? 2000 : 3000;
+function spCountdown() {                                  // local / host: "3 · 2 · 1 · go!" then the first two cards turn
+  if (SPCD || !G || !G.M || G.M.go || isGuest()) return;
+  const left = Math.max(300, spCdMs() - (Date.now() - (G.cdAt || 0)));
+  SPCD = setTimeout(() => { SPCD = null; if (!G || !isSpeed() || !G.M || G.M.go) return; if (pausedSp()) { G.cdAt = Date.now(); spCountdown(); return; } SP.apply(G.M, 0, { a: 'go' }); beep('flip'); spAfter(); }, left);
+  const tick = () => { if (SCREEN === 'game' && isSpeed() && G.M && !G.M.go) { spRender(); setTimeout(tick, 250); } }; tick();
+}
+const pausedSp = () => anyOv() || (SCREEN !== 'game' && G.mode !== 'online');
+
+/* ---------- acting ---------- */
+function spDo(s, act) {
+  const S = G.M, r = SP.apply(S, s, act); if (!r.ok) return r;
+  if (act.a === 'play') beep('card'); else if (S.last && S.last.a === 'flip') { beep('flip'); buzz(25); }
+  spAfter(); return r;
+}
+function spAfter() {
+  if (!G || !isSpeed()) return;
+  const S = G.M;
+  if (S && S.over && !G.counted[G.mid]) spRoundOver();
+  saveGame();
+  if (SCREEN === 'game') spRender();
+  spBroadcast();
+  if (S && !S.over) { if (!S.go) spCountdown(); spBots(); }
+}
+function spBots() {
+  for (const s of [0, 1]) {
+    if (!isBot(s) || SPT[s]) continue;
+    const lv = G.mode === 'cpu' ? G.lvl : 2, [a, b] = SP.DELAY[lv], k = ST.speed === 'fast' ? .8 : 1;
+    SPT[s] = setTimeout(() => {
+      SPT[s] = null;
+      if (!G || !isSpeed() || !G.M || G.M.over || !isBot(s)) return;
+      if (!G.M.go || pausedSp()) { spBots(); return; }
+      const act = SP.choose(G.M, s, lv);
+      if (act) spDo(s, act); else if (!G.M.ready[s]) spDo(s, { a: 'ready' }); else spBots();
+    }, (a + Math.random() * (b - a)) * k);
+  }
+}
+/* a human tap (or drop) on a hand card — pile k optional */
+function spTap(seat, c, k) {
+  const v = spView(); if (!v || v.over) return;
+  if (!v.go) { toast(T('sWait'), 1200); return; }
+  const tops = v.C, ks = [0, 1].filter(i => SP.fits(c, tops[i]));
+  if (!ks.length) { beep('err'); const el = $('#tarea [data-sh="' + c + '"]'); if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); } return; }
+  if (k == null || !ks.includes(k)) k = ks.length === 1 ? ks[0] : SP.bestPile({ P: [{ h: v.P[0].h || [] }, { h: v.P[1].h || [] }], C: [[tops[0]], [tops[1]]] }, seat, c);
+  if (isGuest()) { if (SPPEND.has(c)) return; SPPEND.add(c); beep('card'); LINK.sendTo(0, { type: 'sact', a: { a: 'play', c, p: k } }); spRender(); setTimeout(() => { if (SPPEND.delete(c)) spRender(); }, 2500); return; }
+  const r = spDo(seat, { a: 'play', c, p: k }); if (!r.ok) beep('err');
+}
+function spReady(seat) {
+  const v = spView(); if (!v || v.over || !v.go || v.ready[seat]) return;
+  if (isGuest()) { G.v.ready[seat] = true; LINK.sendTo(0, { type: 'sact', a: { a: 'ready' } }); spRender(); return; }
+  spDo(seat, { a: 'ready' });
+}
+
+/* ---------- end of round ---------- */
+function spRoundOver() {
+  const S = G.M; G.counted[G.mid] = 1; spClear();
+  if (S.winner >= 0) G.score[S.winner]++;
+  G.matchOver = S.winner < 0 ? G.best <= 1 : G.score[S.winner] >= G.best;
+  spStats(S.winner, S.st, G.matchOver);
+  const me = devSeats().length === 1 ? devSeats()[0] : -1;
+  beep(S.winner < 0 ? 'lose' : me < 0 || S.winner === me ? 'win' : 'lose');
+  if (G.mode === 'cpu' && S.winner >= 0) talk(S.winner === 1 ? 'win' : 'lose', true);
+  setTimeout(spResult, 700);
+}
+function spStats(winner, st, matchOver) {
+  const A = LS.get('stats', {}), k = 'sp_' + (G.mode === 'cpu' ? 'cpu' + G.lvl : G.mode), b = A[k] || (A[k] = { g: 0, w: 0, m: 0, mw: 0, pl: 0 });
+  const me = isGuest() ? 1 : 0;
+  b.g++; if (winner === me) b.w++; b.pl += st.plays[me];
+  if (matchOver && G.best > 1) { b.m++; if (G.score[me] > G.score[1 - me]) b.mw++; }
+  LS.set('stats', A);
+}
+function spResult() {
+  if (!G || !isSpeed() || SCREEN !== 'game' || $('#ovs .res')) return;
+  if (anyOv()) closeAllOv();
+  const v = spView(); if (!v || !v.over) return;
+  const me = devSeats().length === 1 ? devSeats()[0] : -1, w = v.winner;
+  const ttl = w < 0 ? T('drawGame') : (me >= 0 ? (w === me ? T('youWon') : T('xWon', nameOf(w))) : T('xWon', nameOf(w)));
+  let h = '<div class="res">' + (w >= 0 && (me < 0 || w === me) ? '<img class="winArt" src="img/win.webp" alt="">' : '') + '<h3>' + esc(ttl) + '</h3>';
+  h += '<table class="tbl">' + [0, 1].map(s => '<tr><td>' + esc(nameOf(s)) + '</td><td>' + esc(T('sLeftN', NF(v.P[s].hn + v.P[s].d))) + '</td><td>' + esc(T('sPlaysN', NF(v.st.plays[s]))) + '</td></tr>').join('') + '</table>';
+  if (G.best > 1) h += '<div class="mscore">' + [0, 1].map(s => '<div>' + num(G.score[s]) + '<small>' + esc(nameOf(s)) + '</small></div>').join('<div>:</div>') + '</div><p class="muted" style="text-align:center;margin:0">' + esc(G.matchOver ? T('matchOverX', nameOf(G.score[0] >= G.score[1] ? 0 : 1)) : T('sMatchTo', NF(G.best))) + '</p>';
+  const host = !isGuest();
+  h += '<div class="row" style="margin-top:12px">' + (host ? (G.matchOver ? '<button class="btn main" data-k="again">🔁 ' + esc(T(G.best > 1 ? 'rematch' : 'newGame')) + '</button>' : '<button class="btn main" data-k="next">▶ ' + esc(T('sNextRound')) + '</button>') : '<p class="muted" style="flex:1;text-align:center">' + esc(T('waitHostNext')) + '</p>') + '</div>';
+  h += '<div class="row" style="margin-top:8px"><button class="btn" data-k="board">👁 ' + esc(T('seeBoard')) + '</button><button class="btn" data-k="home">🏠 ' + esc(T('home')) + '</button></div></div>';
+  const o = overlay(h, 'center');
+  o.addEventListener('click', e => {
+    const k = e.target.closest('[data-k]'); if (!k) return; const x = k.dataset.k; closeOv(o);
+    if (x === 'home') { show('home'); renderHome(); }
+    else if (x === 'next') nextGame(); else if (x === 'again') rematch();
+  });
+}
+
+/* ---------- online (host side sends full views; guest sends intents) ---------- */
+function spBroadcast() {
+  if (!isHostOnline() || !G.M || !LINK || !LINK.session || !LINK.roster.some(p => p.seat === 1)) return;
+  LINK.sendTo(1, { type: 'sview', v: SP.view(G.M, [1]), names: G.names, score: G.score, best: G.best, gameNo: G.gameNo, mid: G.mid, matchOver: !!G.matchOver, sub: isBot(1),
+    cd: G.M.go ? 0 : Math.max(0, spCdMs() - (Date.now() - (G.cdAt || 0))) });
+  const lk = LINK.session.links && LINK.session.links[1];
+  if (lk && lk.out) { let seen = false; for (let i = lk.out.length - 1; i >= 0; i--) { const d = lk.out[i].d; if (d && (d.type === 'sview' || d.type === 'view')) { if (seen) lk.out[i].d = { type: 'x' }; seen = true; } } }
+}
+function spHostMsg(m) {                                   // the friend's intent
+  if (!G.M || G.M.over) { spBroadcast(); return; }
+  const a = m.a || {}; if (a.a !== 'play' && a.a !== 'ready') return;
+  const r = spDo(1, a); if (!r.ok) { if (/[?&]dbg/.test(location.search)) console.log('REJ', JSON.stringify(a), r.why); spBroadcast(); }
+}
+function spGuestView(m) {
+  const prev = G.v, v = m.v, newGame = G.mid !== m.mid;
+  G.game = 'speed';
+  if (newGame) { closeAllOv(); SPLASTN = -1; SPPEND.clear(); G.counted = G.counted || {}; if (prev) beep('shuffle'); G.cdAt = Date.now() - (spCdMs() - (m.cd || 0)); }
+  if (prev && !newGame && v.last && v.last.n !== (prev.last && prev.last.n)) { if (v.last.a === 'play' && v.last.p === 0) beep('card'); else if (v.last.a === 'flip') { beep('flip'); buzz(25); } }
+  if (v.P[1].h) v.P[1].h.forEach(() => 0);
+  SPPEND.forEach(c => { if (!v.P[1].h || !v.P[1].h.includes(c) || v.last && v.last.c === c) SPPEND.delete(c); });
+  G.v = v; G.names = m.names; G.score = m.score; G.best = m.best; G.gameNo = m.gameNo; G.mid = m.mid; G.matchOver = m.matchOver;
+  G.counted = G.counted || {};
+  if (v.over && !G.counted[m.mid]) {
+    G.counted[m.mid] = 1; spStats(v.winner, v.st, m.matchOver);
+    beep(v.winner === 1 ? 'win' : 'lose'); setTimeout(spResult, 700);
+  }
+  saveGame();
+  if (SCREEN === 'lobby') show('game'); else if (SCREEN === 'game') spRender();
+  if (!v.go) { const tick = () => { if (SCREEN === 'game' && isSpeed() && G.v && !G.v.go) { spRender(); setTimeout(tick, 250); } }; tick(); }
+}
+
+/* ---------- view & rendering ---------- */
+function spView() {
+  if (!G || !isSpeed()) return null;
+  if (isGuest()) return G.v || null;
+  return G.M ? SP.view(G.M, devSeats().filter(s => !isBot(s))) : null;
+}
+function spMe() { return isGuest() ? 1 : 0; }
+function spCanSee(seat) { return devSeats().includes(seat) && !isBot(seat); }
+function spRender() {
+  if (!G || SCREEN !== 'game' || !isSpeed()) return;
+  const host = $('#tarea'), v = spView();
+  $('#game').classList.add('isSp');
+  $('#gTitle').textContent = '⚡ ' + T('gSpeed') + ' · ' + (G.mode === 'cpu' ? T('vsCpu') + ' · ' + T(LVL[G.lvl]) : G.mode === 'two' ? T('twoPhone') : T('online'));
+  $('#gSub').textContent = G.best > 1 ? T('sMatchTo', NF(G.best)) + ' · ' + iso(G.score[0] + ' : ' + G.score[1]) : T('sOne');
+  if (typeof renderNet === 'function') renderNet();
+  if (!v) { host.innerHTML = '<div class="msg">' + esc(isGuest() ? T('waitingHost') : '') + '</div>'; $('#abar').innerHTML = ''; return; }
+  const me = spMe(), op = 1 - me, two = G.mode === 'two';
+  // remember where cards were (for the flight to the pile)
+  SPRECT = {}; host.querySelectorAll('[data-sh]').forEach(el => { SPRECT['c' + el.dataset.sh] = el.getBoundingClientRect(); });
+  host.querySelectorAll('[data-shand]').forEach(el => { SPRECT['h' + el.dataset.shand] = el.getBoundingClientRect(); });
+  const r = host.getBoundingClientRect();
+  const w = Math.max(30, Math.min(96, Math.floor(Math.min((r.width - 28) / 6.5, (r.height - (two ? 110 : 80)) / (two ? 4.6 : 4.15)))));
+  host.style.setProperty('--cw', w + 'px'); host.style.setProperty('--ocw', Math.round(w * (two ? 1 : .8)) + 'px');
+  const side = s => {
+    const P = v.P[s], mine = s === me, see = spCanSee(s) || (v.over && P.h);
+    const cards = [];
+    for (let i = 0; i < SP.HAND; i++) {
+      const c = P.h ? P.h[i] : null;
+      if (P.h && c == null) cards.push('<div class="slot sp-empty"></div>');
+      else if (see && c != null) { const pend = SPPEND.has(c), can = v.go && !v.over && (v.C[0] >= 0 && SP.fits(c, v.C[0]) || v.C[1] >= 0 && SP.fits(c, v.C[1])); cards.push(cardHTML(c, (pend ? 'pend ' : '') + (can ? 'can ' : ''), spCanSee(s) && !v.over ? 'data-sh="' + c + '" data-seat="' + s + '"' : '')); }
+      else cards.push(i < P.hn ? backHTML(s) : '<div class="slot sp-empty"></div>');
+    }
+    const draw = '<div class="pile"><span class="n">' + P.d + '</span>' + (P.d ? backHTML(s) : '<div class="slot"></div>') + '<span class="lab">' + esc(T('sDraw')) + '</span></div>';
+    const tag = v.ready[s] ? '<span class="sp-ready">✓ ' + esc(T('sReady')) + '</span>' : '';
+    const who = '<div class="who">' + (G.mode === 'cpu' && s === 1 ? '<img class="av" src="' + AV[G.lvl] + '" alt="">' : '') + '<b>' + (isOnline() ? '<i class="dot' + (s === 0 || guestOnline() || isGuest() ? '' : ' off') + '"></i>' : '') + esc(nameOf(s)) + '</b><span>' + esc(T('leftN', iso(String(P.hn + P.d)))) + '</span>' + tag + '</div>';
+    const hand = '<div class="sp-hand" data-shand="' + s + '">' + cards.join('') + '</div>';
+    const row = mine || (two && s === 1) ? hand + draw : draw + hand;
+    let flip = '';
+    if (two && s === op) flip = spFlipBtn(v, s, true);
+    const cls = 'prow ' + (s === me ? 'me' : 'opp') + (two && s === op ? ' sp-rot' : '');
+    return '<div class="' + cls + '">' + (s === me ? '<div class="piles">' + row + '</div>' + who : who + '<div class="piles">' + row + '</div>' + flip) + '</div>';
+  };
+  const mid = '<div class="sp-mid">' + [0, 1].map(k => {
+    const sd = '<div class="pile"><span class="n">' + v.side[k] + '</span>' + (v.side[k] ? backHTML(k) : '<div class="slot">↻</div>') + '<span class="lab">' + esc(T('sSide')) + '</span></div>';
+    const pile = '<div class="pile sp-pile" data-pile="' + k + '"><span class="n">' + v.Cn[k] + '</span>' + (v.C[k] >= 0 ? cardHTML(v.C[k], '', 'data-ptop="' + k + '"') : '<div class="slot">' + (v.go ? '' : '?') + '</div>') + '</div>';
+    return k === 0 ? sd + pile : pile + sd;
+  }).join('') + '</div>';
+  let cd = '';
+  if (!v.go && !v.over) { const left = Math.max(0, spCdMs() - (Date.now() - (G.cdAt || Date.now()))), n = Math.ceil(left / 1000); cd = '<div class="sp-cd">' + (n > 0 ? n : '⚡') + '</div>'; }
+  host.innerHTML = '<div class="sp ' + (two ? 'two' : '') + '">' + side(op) + mid + side(me) + cd + '</div>';
+  // flight of the last played card
+  if (v.last && v.last.n !== SPLASTN) {
+    if (SPLASTN >= 0 && v.last.a === 'play') spFly(v.last);
+    else if (v.last.a === 'flip' && SPLASTN >= 0) host.querySelectorAll('[data-ptop]').forEach(el => el.classList.add('pop'));
+    SPLASTN = v.last.n;
+  }
+  spBar(v, me);
+  const m = $('#gMsg');
+  if (v.over) m.textContent = v.winner < 0 ? T('drawGame') : T('xWon', nameOf(v.winner));
+  else if (!v.go) m.textContent = T('sGetReady');
+  else if (spCanSee(me) && !spCanPlayV(v, me)) m.textContent = v.ready[me] ? (v.ready[op] ? '' : T('sWaitFlip', nameOf(op))) : T('sNoMove');
+  else m.textContent = T('sGo');
+}
+function spCanPlayV(v, s) { const h = v.P[s].h; if (!h) return false; return h.some(c => [0, 1].some(k => v.C[k] >= 0 && SP.fits(c, v.C[k]))); }
+function spFlipBtn(v, s, rot) {
+  if (v.over || !spCanSee(s)) return '';
+  const stuck = v.go && !spCanPlayV(v, s), rd = v.ready[s];
+  return '<button class="btn sp-flip' + (stuck && !rd ? ' main pulse' : '') + (rd ? ' on' : '') + (rot ? ' rot' : '') + '" data-sk="flip" data-seat="' + s + '" ' + (v.go ? '' : 'disabled') + '>' + (rd ? '✓ ' + esc(T('sReady')) : '🔄 ' + esc(T('sFlip'))) + '</button>';
+}
+function spBar(v, me) {
+  const bar = $('#abar'); let h = '';
+  if (v.over) h = $('#ovs .res') ? '' : '<button class="btn main" data-sk="result">🏁 ' + esc(T('seeResults')) + '</button>';
+  else h = spFlipBtn(v, me, false) || '<div class="msg" style="flex:1;align-self:center"></div>';
+  if (bar.dataset.sig !== h) { bar.innerHTML = h; bar.dataset.sig = h; }
+}
+function spFly(L) {
+  if (document.body.classList.contains('tn-fast') || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const to = $('#tarea [data-ptop="' + L.k + '"]'); if (!to) return;
+  const a = SPRECT['c' + L.c] || SPRECT['h' + L.p]; if (!a) { to.classList.add('pop'); return; }
+  const b = to.getBoundingClientRect(); if (!b.width) return;
+  const f = document.createElement('div'); f.className = 'flyc'; f.innerHTML = cardHTML(L.c, '', 'style="--w:' + b.width + 'px"');
+  f.style.left = a.left + 'px'; f.style.top = a.top + 'px'; document.body.appendChild(f); to.style.visibility = 'hidden';
+  requestAnimationFrame(() => requestAnimationFrame(() => { f.style.left = b.left + 'px'; f.style.top = b.top + 'px'; }));
+  setTimeout(() => { f.remove(); to.style.visibility = ''; }, 260);
+}
+
+/* ---------- input: every finger on its own (two players on one phone) ---------- */
+function bindSpeed() {
+  const area = $('#tarea');
+  area.addEventListener('pointerdown', e => {
+    if (!isSpeed()) return;
+    const fb = e.target.closest('[data-sk="flip"]'); if (fb) { e.preventDefault(); if (!fb.disabled) spReady(+fb.dataset.seat); return; }
+    const el = e.target.closest('[data-sh]'); if (!el) return;
+    e.preventDefault();
+    SPD[e.pointerId] = { c: +el.dataset.sh, seat: +el.dataset.seat, x: e.clientX, y: e.clientY, el, on: false };
+  });
+  window.addEventListener('pointermove', e => {
+    const d = SPD[e.pointerId]; if (!d || !isSpeed()) return;
+    if (!d.on && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 12) {
+      d.on = true; const r = d.el.getBoundingClientRect();
+      d.g = document.createElement('div'); d.g.className = 'dragGhost'; d.g.innerHTML = cardHTML(d.c, '', 'style="--w:' + r.width + 'px"'); document.body.appendChild(d.g); d.el.style.opacity = '.35';
+    }
+    if (d.on) { d.g.style.left = e.clientX + 'px'; d.g.style.top = e.clientY + 'px'; }
+  });
+  const end = e => {
+    const d = SPD[e.pointerId]; if (!d) return; delete SPD[e.pointerId];
+    if (!isSpeed()) { if (d.g) d.g.remove(); return; }
+    if (!d.on) { spTap(d.seat, d.c); return; }
+    d.g.remove(); d.el.style.opacity = '';
+    let k = null; const under = document.elementFromPoint(e.clientX, e.clientY), p = under && under.closest('[data-pile]');
+    if (p) k = +p.dataset.pile; else {                    // magnet: the nearer pile within a card width
+      let bd = 1e9; $$('#tarea [data-pile]').forEach(el => { const r = el.getBoundingClientRect(), dd = Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)); if (dd < bd && dd < r.width * 1.3) { bd = dd; k = +el.dataset.pile; } });
+    }
+    if (k != null) spTap(d.seat, d.c, k);
+  };
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', e => { const d = SPD[e.pointerId]; if (d) { if (d.g) d.g.remove(); d.el.style.opacity = ''; delete SPD[e.pointerId]; } });
+  $('#abar').addEventListener('click', e => {
+    if (!isSpeed()) return;
+    const k = e.target.closest('[data-sk]'); if (!k || k.disabled) return;
+    if (k.dataset.sk === 'flip') spReady(+k.dataset.seat); else if (k.dataset.sk === 'result') spResult();
+  });
 }
 
 /* ---- online.js ---- */
@@ -2079,7 +2801,7 @@ function openOnline(code) {
 }
 function netHost() {
   newSession('online', { net: { role: 'host' }, names: [ST.name || T('player'), ''], touch: ST.touch, target: ST.target });
-  G.cfg = { touch: ST.touch, target: ST.target }; saveGame(); LINK.host(); renderLobby();
+  G.cfg = { game: ST.game || 'touch', touch: ST.touch, target: ST.target, sbest: ST.sbest || 1 }; saveGame(); LINK.host(); renderLobby();
 }
 function netJoin(code) {
   code = String(code || '').trim().toUpperCase(); if (code.length < 4) { toast(T('codeShort')); return; }
@@ -2091,7 +2813,7 @@ function statusTxt() {
   return { off: T('stOff'), connecting: T('stConnecting'), waiting: T('stWaiting'), open: T('stOpen'), reconnecting: T('stRecon'), notfound: T('stNotFound'), error: T('stError'), full: T('stFull') }[st] || st;
 }
 const segL = (k, opts, cur) => '<div class="seg" data-lk="' + k + '">' + opts.map(([v, l]) => '<button data-v="' + v + '" class="' + (String(cur) === String(v) ? 'on' : '') + '">' + esc(l) + '</button>').join('') + '</div>';
-const cfgTxt = c => (c.touch === 'classic' ? T('tClassic') : T('tBeginner')) + ' · ' + (c.target ? T('to', NF(c.target)) : T('oneGame'));
+const cfgTxt = c => c.game === 'speed' ? '⚡ ' + T('gSpeed') + ' · ' + T((SPBEST.find(x => x[0] === c.sbest) || SPBEST[0])[1]) : '🃏 ' + T('gTouch') + ' · ' + (c.touch === 'classic' ? T('tClassic') : T('tBeginner')) + ' · ' + (c.target ? T('to', NF(c.target)) : T('oneGame'));
 function renderLobby() {
   const b = $('#lobbyBody'); if (!b) return;
   if (!isOnline()) {
@@ -2109,9 +2831,11 @@ function renderLobby() {
   if (host && code) h += '<div class="row" style="margin-top:10px"><button class="btn main" id="lWa">💬 ' + esc(T('inviteWa')) + '</button><button class="btn" id="lCopy">🔗 ' + esc(T('copyLink')) + '</button></div>';
   h += '</div><div class="card"><h3>' + esc(T('players')) + '</h3><div class="roster">' + (ros || '<div class="muted">' + esc(T('noOneYet')) + '</div>') + '</div></div>';
   if (host && !G.M) {
-    h += '<div class="card"><h3>' + esc(T('gameRules')) + '</h3><label class="f">' + esc(T('touchMode')) + '</label>' + segL('touch', [['beginner', T('tBeginner')], ['classic', T('tClassic')]], cfg.touch) +
+    h += '<div class="card"><h3>' + esc(T('gameRules')) + '</h3><label class="f">' + esc(T('gameLbl')) + '</label>' + segL('game', [['touch', '🃏 ' + T('gTouch')], ['speed', '⚡ ' + T('gSpeed')]], cfg.game || 'touch') +
+      (cfg.game === 'speed' ? '<label class="f">' + esc(T('sSeries')) + '</label>' + segL('sbest', SPBEST.map(([v, l]) => [v, T(l)]), cfg.sbest || 1) :
+      '<label class="f">' + esc(T('touchMode')) + '</label>' + segL('touch', [['beginner', T('tBeginner')], ['classic', T('tClassic')]], cfg.touch) +
       '<p class="sub">' + esc(cfg.touch === 'classic' ? T('tClassicSub') : T('tBeginnerSub')) + '</p>' +
-      '<label class="f">' + esc(T('matchLbl')) + '</label>' + segL('target', [[0, T('oneGame')], [100, T('to', '100')], [200, T('to', '200')]], cfg.target) + '</div>';
+      '<label class="f">' + esc(T('matchLbl')) + '</label>' + segL('target', [[0, T('oneGame')], [100, T('to', '100')], [200, T('to', '200')]], cfg.target)) + '</div>';
     const ready = rosterOnline(1);
     h += '<button class="btn main" id="lStart" style="width:100%" ' + (ready ? '' : 'disabled') + '>' + esc(ready ? T('startGame') : T('waitFriend')) + '</button>';
   } else if (host) h += '<button class="btn main" id="lBack" style="width:100%">' + esc(T('backToGame')) + '</button>';
@@ -2135,11 +2859,18 @@ function saveName() { const n = $('#lName'); if (n) { ST.name = n.value.trim().s
 /* ---------- host: run the game ---------- */
 function netStart() {
   if (!isHostOnline() || !rosterOnline(1)) return;
+  if (G.cfg.game === 'speed') {
+    G.game = 'speed'; G.best = G.cfg.sbest || 1; G.names = [ST.name || T('player'), nameAt(1) || T('friend')];
+    G.score = [0, 0]; G.gameNo = 0; G.matchOver = false; G.id = Date.now(); G.counted = {};
+    spStartRound(); show('game'); spAfter(); return;
+  }
+  G.game = 'touch';
   G.touch = G.cfg.touch; G.target = G.cfg.target; G.names = [ST.name || T('player'), nameAt(1) || T('friend')];
   G.score = [0, 0]; G.gameNo = 0; G.matchOver = false; G.id = Date.now();
   startGameNo(); show('game'); afterChange();
 }
 function netBroadcast() {
+  if (isSpeed()) return spBroadcast();
   if (!isHostOnline() || !G.M || !LINK || !LINK.session) return;
   if (!LINK.roster.some(p => p.seat === 1)) return;
   const M = G.M;
@@ -2153,6 +2884,7 @@ function netMsg(m, from) {
   if (!G || !isOnline() || !m) return;
   if (isHostOnline()) {
     if (from !== 1) return;
+    if (m.type === 'sact') { if (isSpeed()) spHostMsg(m); return; }
     if (m.type === 'act' && m.a && m.a.a === 'hold') { if (G.M && !G.M.over && TN.apply(G.M, 1, m.a).ok) { saveGame(); renderGame(); } netBroadcast(); return; }
     if (m.type === 'act') { if (!G.M || G.M.over) { netBroadcast(); return; } const r = doAct(1, m.a); if (!r.ok) { LINK.sendTo(1, { type: 'nope', why: r.why }); netBroadcast(); } }
     else if (m.type === 'touch') { if (G.M) resolveTouch(1); }
@@ -2163,7 +2895,9 @@ function netMsg(m, from) {
   if (m.type === 'lobby') { G.cfg = m.cfg; saveGame(); if (SCREEN === 'lobby') renderLobby(); return; }
   if (m.type === 'nope') { BUSY = false; clearTimeout(busyT); if (WHY[m.why]) blocked(1, m.why); else beep('err'); renderGame(); return; }
   if (m.type === 'tev') { if (!m.ok && m.caller === 1) LOCK[1] = Date.now() + 4000; touchShow(m); if (m.ok) { SEL = null; HINT = null; } renderGame(); return; }
+  if (m.type === 'sview') { spGuestView(m); return; }
   if (m.type === 'view') {
+    if (G.game === 'speed') { G.game = 'touch'; G.v = null; }
     const prev = G.v, v = m.v, newGame = G.mid !== m.mid;
     if (newGame) { closeAllOv(); LASTN = -1; G.hints = 0; SEL = null; HINT = null; if (prev) beep('shuffle'); }
     if (prev && !newGame && v.n !== prev.n && v.last && v.last.p === 0) actSound(v.last);
@@ -2207,8 +2941,12 @@ function bubble(seat, text, cls) {
   b.innerHTML = single ? esc(text) : '<small>' + esc(nameOf(seat)) + '</small>' + esc(text);
   L.appendChild(b);
   const bw = b.offsetWidth, x = Math.max(8, Math.min(innerWidth - bw - 8, r.left + r.width / 2 - bw / 2));
-  b.style.left = x + 'px'; b.style.top = Math.max(8, mine ? r.top - b.offsetHeight - 6 : r.bottom + 4) + 'px';
-  setTimeout(() => b.remove(), single ? 3500 : 6000);
+  const say = cls === 'say', gt = ($('#game .gtop') || { getBoundingClientRect: () => ({ bottom: 0 }) }).getBoundingClientRect().bottom;
+  let y = mine ? r.top - b.offsetHeight - 6 : r.bottom + 4;
+  if (say && !mine) { b.style.left = Math.max(8, Math.min(innerWidth - bw - 8, r.right - bw)) + 'px'; y = Math.max(gt + 2, r.top - b.offsetHeight - 2); }   // the computer's line: above its name, not over the cards
+  else b.style.left = x + 'px';
+  b.style.top = Math.max(8, y) + 'px';
+  setTimeout(() => b.remove(), single ? 3500 : say ? 3800 : 6000);
 }
 function sendEmo(e) { if (!LINK) return; LINK.emoji(e); bubble(perspective(), e); }
 function emoPanel() {
@@ -2245,23 +2983,28 @@ let RULES_BACK = 'home';
 function renderHome() {
   applyLang();
   $('#verLbl').textContent = 'v' + APP_VERSION;
+  const sp = ST.game === 'speed';
+  $$('#gameSw [data-g]').forEach(b => b.classList.toggle('on', b.dataset.g === ST.game));
+  $('#heroTag').textContent = T(sp ? 'sTagline' : 'tagline'); $('#gDesc').textContent = T(sp ? 'sDesc' : 'tDesc');
   const c = $('#mCont');
   if (G && ((G.M && !(G.M.over && G.matchOver)) || isOnline())) {
     c.classList.remove('hide');
-    $('#mContSub').textContent = (isOnline() ? T('online') + (LINK && LINK.session ? ' · ' + LINK.session.code : '') : G.mode === 'two' ? T('twoPhone') : T('vsCpu') + ' · ' + T(LVL[G.lvl])) + (G.target ? ' · ' + iso(G.score[0] + ' : ' + G.score[1]) : '');
+    $('#mContSub').textContent = (isSpeed() ? '⚡ ' + T('gSpeed') + ' · ' : '') + (isOnline() ? T('online') + (LINK && LINK.session ? ' · ' + LINK.session.code : '') : G.mode === 'two' ? T('twoPhone') : T('vsCpu') + ' · ' + T(LVL[G.lvl])) + (G.target ? ' · ' + iso(G.score[0] + ' : ' + G.score[1]) : '');
   } else c.classList.add('hide');
 }
 
 /* ---------- setup: vs computer / one phone ---------- */
 function setupBox(mode) {
+  const sp = ST.game === 'speed'; let sbest = ST.sbest || 1;
   let level = ST.level, touch = ST.touch, target = ST.target, names = LS.get('names', [ST.name || T('player') + ' 1', T('player') + ' 2']);
   const o = overlay('<div id="suB"></div>');
   function draw() {
-    let h = '<h3>' + esc(mode === 'cpu' ? T('vsCpu') : T('twoPhone')) + '</h3>';
-    if (mode === 'cpu') h += '<label class="f">' + esc(T('chooseLevel')) + '</label><div class="lvls">' + [0, 1, 2].map(i => '<button class="btn lvb ' + (level === i ? 'main' : '') + '" data-l="' + i + '"><img class="av" src="' + AV[i] + '" alt="">' + esc(T(LVL[i])) + '</button>').join('') + '</div><p class="sub">' + esc(T('lvSub' + level)) + '</p>';
+    let h = '<h3>' + (sp ? '⚡ ' + esc(T('gSpeed')) + ' · ' : '') + esc(mode === 'cpu' ? T('vsCpu') : T('twoPhone')) + '</h3>';
+    if (mode === 'cpu') h += '<label class="f">' + esc(T('chooseLevel')) + '</label><div class="lvls">' + [0, 1, 2].map(i => '<button class="btn lvb ' + (level === i ? 'main' : '') + '" data-l="' + i + '"><img class="av" src="' + AV[i] + '" alt="">' + esc(T(LVL[i])) + '</button>').join('') + '</div><p class="sub">' + esc(T((sp ? 'slvSub' : 'lvSub') + level)) + '</p>';
     else h += [0, 1].map(i => '<label class="f" for="nm' + i + '">' + esc(T('playerN', i + 1)) + '</label><input class="in" id="nm' + i + '" data-nm="' + i + '" maxlength="20" value="' + esc(names[i] || '') + '">').join('');
-    h += '<label class="f">' + esc(T('touchMode')) + '</label><div class="seg" data-sk="touch"><button data-v="beginner" class="' + (touch === 'beginner' ? 'on' : '') + '">🛟 ' + esc(T('tBeginner')) + '</button><button data-v="classic" class="' + (touch === 'classic' ? 'on' : '') + '">✋ ' + esc(T('tClassic')) + '</button></div><p class="sub">' + esc(touch === 'classic' ? T('tClassicSub') : T('tBeginnerSub')) + '</p>';
-    h += '<label class="f">' + esc(T('matchLbl')) + '</label><div class="seg" data-sk="target">' + [[0, T('oneGame')], [100, T('to', '100')], [200, T('to', '200')]].map(([v, l]) => '<button data-v="' + v + '" class="' + (target === v ? 'on' : '') + '">' + esc(l) + '</button>').join('') + '</div><p class="sub">' + esc(T('matchSub')) + '</p>';
+    if (sp) h += '<label class="f">' + esc(T('sSeries')) + '</label><div class="seg" data-sk="sbest">' + SPBEST.map(([v, l]) => '<button data-v="' + v + '" class="' + (sbest === v ? 'on' : '') + '">' + esc(T(l)) + '</button>').join('') + '</div>' + (mode === 'two' ? '<p class="sub">' + esc(T('sTwoSub')) + '</p>' : '');
+    else h += '<label class="f">' + esc(T('touchMode')) + '</label><div class="seg" data-sk="touch"><button data-v="beginner" class="' + (touch === 'beginner' ? 'on' : '') + '">🛟 ' + esc(T('tBeginner')) + '</button><button data-v="classic" class="' + (touch === 'classic' ? 'on' : '') + '">✋ ' + esc(T('tClassic')) + '</button></div><p class="sub">' + esc(touch === 'classic' ? T('tClassicSub') : T('tBeginnerSub')) + '</p>';
+    if (!sp) h += '<label class="f">' + esc(T('matchLbl')) + '</label><div class="seg" data-sk="target">' + [[0, T('oneGame')], [100, T('to', '100')], [200, T('to', '200')]].map(([v, l]) => '<button data-v="' + v + '" class="' + (target === v ? 'on' : '') + '">' + esc(l) + '</button>').join('') + '</div><p class="sub">' + esc(T('matchSub')) + '</p>';
     h += '<div class="row" style="margin-top:14px"><button class="btn ghosty" data-c>' + esc(T('cancel')) + '</button><button class="btn main" data-go>' + esc(T('startGame')) + '</button></div>';
     $('#suB').innerHTML = h;
   }
@@ -2270,16 +3013,19 @@ function setupBox(mode) {
     const b = e.target.closest('button'); if (!b) return;
     keepNames();
     if (b.dataset.l != null) level = +b.dataset.l;
-    else if (b.closest('[data-sk]')) { const k = b.closest('[data-sk]').dataset.sk; if (k === 'touch') touch = b.dataset.v; else target = +b.dataset.v; }
+    else if (b.closest('[data-sk]')) { const k = b.closest('[data-sk]').dataset.sk; if (k === 'touch') touch = b.dataset.v; else if (k === 'sbest') sbest = +b.dataset.v; else target = +b.dataset.v; }
     else if (b.hasAttribute('data-c')) { closeOv(o); return; }
     else if (b.hasAttribute('data-go')) {
-      Object.assign(ST, { level, touch, target }); saveST();
+      Object.assign(ST, { level, touch, target, sbest }); saveST();
       const go = () => {
         closeOv(o);
-        if (mode === 'cpu') startCpu(level, touch, target);
-        else { const nm = [0, 1].map(i => names[i] || T('playerN', i + 1)); LS.set('names', nm); startTwo(nm, touch, target); }
+        const nm = [0, 1].map(i => names[i] || T('playerN', i + 1));
+        if (mode !== 'cpu') LS.set('names', nm);
+        if (sp) { if (mode === 'cpu') spStartCpu(level, sbest); else spStartTwo(nm, sbest); }
+        else if (mode === 'cpu') startCpu(level, touch, target);
+        else startTwo(nm, touch, target);
       };
-      if (G && G.M && !G.matchOver && !isOnline()) confirmBox(T('replaceQ'), T('newGame'), go); else go();
+      if (G && G.M && !G.matchOver && !isOnline() && !(G.M.over && G.matchOver)) confirmBox(T('replaceQ'), T('newGame'), go); else go();
       return;
     }
     draw();
@@ -2300,7 +3046,7 @@ function renderSettings() {
     '<div class="hero" style="min-height:0;padding:12px;margin:12px 0 0;display:flex;gap:6px;direction:ltr;justify-content:center;--cw:44px">' + [0, 14, 77, 103].map(c => cardHTML(c)).join('') + backHTML(0) + backHTML(1) + '</div></div>' +
     '<div class="card"><h3>' + esc(T('playLbl')) + '</h3><label class="f">' + esc(T('touchMode')) + '</label>' + seg('touch', [['beginner', '🛟 ' + T('tBeginner')], ['classic', '✋ ' + T('tClassic')]]) + '<p class="sub">' + esc(ST.touch === 'classic' ? T('tClassicSub') : T('tBeginnerSub')) + '</p>' +
     '<label class="f">' + esc(T('cpuSpeed')) + '</label>' + seg('speed', [['normal', T('spNormal')], ['fast', T('spFast')]]) +
-    sw('oneTap', T('oneTap'), T('oneTapSub')) + sw('flip', T('flipLbl'), T('flipSub')) + sw('sound', T('sound')) + sw('vib', T('vibration')) + '</div>' +
+    sw('oneTap', T('oneTap'), T('oneTapSub')) + sw('talk', T('talkLbl'), T('talkSub')) + sw('flip', T('flipLbl'), T('flipSub')) + sw('sound', T('sound')) + sw('vib', T('vibration')) + '</div>' +
     '<div class="card"><h3>' + esc(T('data')) + '</h3><div class="row"><button class="btn" id="sBackup">⬇️ ' + esc(T('backup')) + '</button><label class="btn" for="sRestore">⬆️ ' + esc(T('restore')) + '</label><input type="file" id="sRestore" accept="application/json,.json" class="hide"></div><p class="muted">' + esc(T('dataNote')) + '</p>' +
     '<div class="row"><button class="btn ghosty" id="sTour">🧭 ' + esc(T('tourAgain')) + '</button><button class="btn ghosty" id="sReset" style="color:var(--bad);border-color:var(--bad)">🗑️ ' + esc(T('deleteAll')) + '</button></div></div>' +
     '<div class="badge">TouchNest v' + APP_VERSION + ' · © AppNest 2026</div>';
@@ -2319,6 +3065,13 @@ function renderSettings() {
 function renderStats() {
   const S = LS.get('stats', {}); let h = '';
   const pct = (a, n) => n ? Math.round(a / n * 100) + '%' : '–';
+  for (const k of ['sp_cpu0', 'sp_cpu1', 'sp_cpu2', 'sp_two', 'sp_online']) {
+    const b = S[k]; if (!b || !b.g) continue; const kk = k.slice(3);
+    const lab = '⚡ ' + T('gSpeed') + ' · ' + (kk.startsWith('cpu') ? T('vsCpu') + ' · ' + T(LVL[+kk[3]]) : kk === 'two' ? T('twoPhone') : T('online'));
+    h += '<div class="card"><h3>' + esc(lab) + '</h3><table class="tbl">' + (kk === 'two' ? '<tr><td>' + esc(T('gamesPlayed')) + '</td><td>' + num(b.g) + '</td><td></td></tr>' : '<tr><td>' + esc(T('sRoundsWon')) + '</td><td>' + iso(NF(b.w) + ' / ' + NF(b.g)) + '</td><td>' + pct(b.w, b.g) + '</td></tr>') +
+      (b.m && kk !== 'two' ? '<tr><td>' + esc(T('matchesWon')) + '</td><td>' + iso(NF(b.mw) + ' / ' + NF(b.m)) + '</td><td>' + pct(b.mw, b.m) + '</td></tr>' : '') +
+      (kk !== 'two' ? '<tr><td>' + esc(T('sPlaysAvg')) + '</td><td>' + num(Math.round(b.pl / b.g)) + '</td><td></td></tr>' : '') + '</table></div>';
+  }
   for (const k of ['cpu0', 'cpu1', 'cpu2', 'two', 'online']) {
     const b = S[k]; if (!b || !b.g) continue;
     const lab = k.startsWith('cpu') ? T('vsCpu') + ' · ' + T(LVL[+k[3]]) : k === 'two' ? T('twoPhone') : T('online');
@@ -2365,9 +3118,13 @@ function playReplay(r) {
 function fitPilesIn(host) { fitPiles(host); }
 
 /* ---------- rules ---------- */
-function renderRules() {
+function renderRules(g) {
+  g = g || ST.game || 'touch';
+  const tabs = '<div class="seg gsw" id="rTabs"><button data-g="touch" class="' + (g === 'touch' ? 'on' : '') + '">🃏 ' + esc(T('gTouch')) + '</button><button data-g="speed" class="' + (g === 'speed' ? 'on' : '') + '">⚡ ' + esc(T('gSpeed')) + '</button></div>';
+  if (g === 'speed') { $('#rulesBody').innerHTML = tabs + T('rulesSpeed'); }
   const ex = cs => '<div class="ex">' + cs.map(c => c < 0 ? '<div class="slot"></div>' : cardHTML(c)).join('') + '</div>';
-  $('#rulesBody').innerHTML = T('rulesA') + ex([0, 1, 2]) + T('rulesB') + ex([12, 37, 11]) + T('rulesC') + ex([7, 8, 9]) + T('rulesD');
+  if (g !== 'speed') $('#rulesBody').innerHTML = tabs + T('rulesA') + ex([0, 1, 2]) + T('rulesB') + ex([12, 37, 11]) + T('rulesC') + ex([7, 8, 9]) + T('rulesD');
+  $$('#rTabs [data-g]').forEach(b => b.onclick = () => renderRules(b.dataset.g));
 }
 
 /* ---------- about ---------- */
@@ -2400,7 +3157,7 @@ function tour(force) {
 
 /* ---------- init ---------- */
 function init() {
-  applyLook(); applyLang(); initLink(); bindGame(); bindVoice();
+  applyLook(); applyLang(); initLink(); bindGame(); bindSpeed(); bindVoice();
   $$('[data-home]').forEach(b => b.onclick = () => {
     if (b.closest('#rules') && RULES_BACK !== 'home') { const t = RULES_BACK; RULES_BACK = 'home'; show(t); return; }
     if (b.closest('#lobby') && isOnline() && !G.M && !G.v) { netLeave(); return; }
@@ -2414,6 +3171,7 @@ function init() {
   $('#hStats').onclick = () => { renderStats(); show('stats'); };
   $('#hReplays').onclick = () => { renderReplays(); show('replays'); };
   $('#hSettings').onclick = () => { renderSettings(); show('settings'); };
+  $$('#gameSw [data-g]').forEach(b => b.onclick = () => { ST.game = b.dataset.g; saveST(); beep('card'); renderHome(); });
   $('#mCpu').onclick = () => setupBox('cpu');
   $('#mTwo').onclick = () => setupBox('two');
   $('#mOnline').onclick = () => { if (isOnline()) { show(G.M || G.v ? 'game' : 'lobby'); if (!G.M && !G.v) renderLobby(); } else openOnline(); };
@@ -2423,7 +3181,7 @@ function init() {
     show('game'); afterChange(); if (G.M && G.M.viol) armWindow();
   };
   // a saved game from an incompatible build is dropped gently
-  if (G && G.M && G.M.v !== 1) { G = null; saveGame(); }
+  if (G && G.M && G.M.v !== 1 && G.M.v !== 's1') { G = null; saveGame(); }
   if (G && isOnline() && G.net && G.net.sess) { LINK.resume(G.net.sess); if (isGuest() && G.v) setTimeout(() => LINK.isOpen() && LINK.sendTo(0, { type: 'hello' }), 1500); }
   else if (G && isOnline()) { G = null; saveGame(); }
   if (G && G.M && G.M.viol && !isGuest()) armWindow();

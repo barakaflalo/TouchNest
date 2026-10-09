@@ -20,7 +20,7 @@
 })();
 
 /* TouchNest service worker — bump VERSION on every upload */
-const VERSION = 'touchnest-v2';
+const VERSION = 'touchnest-v3';
 const SHELL = ['./', 'manifest.json', 'icon-192.png', 'icon-512.png', 'privacy_policy.html',
   'img/back-blue.webp', 'img/back-red.webp', 'img/felt.webp', 'img/face-j.webp', 'img/face-q.webp', 'img/face-k.webp',
   'img/logo.webp', 'img/hero.webp', 'img/touch-stamp.webp', 'img/win.webp', 'img/av-04.webp', 'img/av-03.webp', 'img/av-11.webp'];
